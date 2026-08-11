@@ -98,14 +98,14 @@ function parseStoredJSON(raw, fallback) {
 app.get('/api/admin/accounts', (req, res) => {
   if (!requireAdminSecret(req, res)) return;
   const keys = store.list('account:', true);
-  const onlineUsernames = new Set(Array.from(allPlayers.values()).map((p) => p.username));
+  const onlineUsernames = new Set(Array.from(allPlayers.values()).map((p) => (p.username || '').toLowerCase()));
   const accounts = keys.map((k) => {
     const acc = parseStoredJSON(store.get(k, true), {});
     return {
       username: acc.username,
       displayName: acc.displayName,
       appearance: acc.appearance,
-      online: onlineUsernames.has(acc.username),
+      online: onlineUsernames.has((acc.username || '').toLowerCase()),
     };
   });
   res.json({ accounts });

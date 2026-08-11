@@ -423,6 +423,9 @@
   #admin-spectate-bar{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9;background:rgba(20,19,16,.85);border:2px solid var(--ember);padding:10px 16px;display:none;align-items:center;gap:12px;font-family:'Press Start 2P';font-size:10px;color:var(--parchment);}
   #admin-spectate-bar .btn{font-size:9px;padding:6px 10px;}
   .chest-row-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .admin-online-row{flex-direction:column;align-items:stretch;gap:6px;}
+  .admin-online-name{display:flex;align-items:center;gap:8px;font-size:10px;}
+  .admin-online-row .admin-actions{margin-left:0;flex-wrap:wrap;}
 
   #letter-overlay{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;cursor:pointer;}
   #letter-paper{
@@ -1752,8 +1755,11 @@ async function refreshAdminDashboard(){
   onlineList.innerHTML = '';
   (online.players||[]).forEach(p=>{
     const row = document.createElement('div');
-    row.className = 'chest-row';
-    row.innerHTML = `<span class="online-dot on"></span><div class="chest-row-label">${escapeHtml(p.displayName||p.username)}</div>`;
+    row.className = 'chest-row admin-online-row';
+    const label = document.createElement('div');
+    label.className = 'admin-online-name';
+    label.innerHTML = `<span class="online-dot on"></span>${escapeHtml(p.displayName||p.username)}`;
+    row.appendChild(label);
     const actions = document.createElement('div');
     actions.className = 'admin-actions';
     [['ghost','Ghost TP'],['pov','POV'],['visible','Visible TP']].forEach(([mode,label])=>{
