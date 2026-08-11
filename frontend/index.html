@@ -535,7 +535,7 @@
   <div class="login-header">
     <div class="mc-title"><img src="assets/logo.png" alt="Lucia's Minecraft"></div>
   </div>
-  <p class="tag login-tag">a blocky world to explore</p>
+  <p class="tag login-tag">puta</p>
   <div class="panel">
     <div class="tabs">
       <div id="tab-login" class="active">Login</div>
@@ -763,7 +763,7 @@
   <div id="hotbar"></div>
   <div id="msg-toast"></div>
   <div id="shake-arms"><div class="arm left"></div><div class="arm right"></div></div>
-  <div id="pointer-hint">Click to play — Mouse: look around (up/down/full turn) — WASD: move<br>Left click: break/hit — Right click: place/eat/open chest/sleep — E: inventory — R: shake palm tree — F: cycle view (1st/3rd-behind/3rd-front) — Esc: menu<br>Double-tap Space: toggle flying (Creative) — Space: up — C: down — Shift: sprint — Scroll: zoom (3rd-person)</div>
+  <div id="pointer-hint">Click to play — WASD: move<br>Left click: break/hit — Right click: Interact — E: inventory — R: shake palm tree — F: Change POV — Esc: menu<br>C: Fly down — Shift: sprint</div>
   <div id="death-screen"><h1>You starved to death...</h1><button id="respawn-btn" class="btn">Respawn</button></div>
 </div>
 
@@ -1130,8 +1130,9 @@ function normalizeAppearance(account){
 }
 let session = { username:null, displayName:null, appearance: randomAppearance() };
 function genId(){ return (session.username||'anon')+'_'+Date.now()+'_'+Math.floor(Math.random()*1e6); }
-let currentMap = null; 
+let currentMap = null;
 let pendingWorldType = 'flat';
+let loadAndStartInFlight = false;
 
 
 function persistSession(){
@@ -1175,7 +1176,7 @@ document.getElementById('login-submit').onclick = async ()=>{
 
   if(authMode === 'register'){
     if(existingRaw){ errEl.textContent = 'This username already exists.'; return; }
-    const account = { username:u, password:p, displayName:u, appearance: randomAppearance() };
+    const account = { username:u, password:p, displayName:u, appearance: appearanceFromPreset(TEXTURED_SKINS.lucia_lpb) };
     await storeSet(key, JSON.stringify(account), true);
     session = { username:u.toLowerCase(), displayName:account.displayName, appearance:account.appearance };
     persistSession();
@@ -1836,11 +1837,13 @@ async function startAdminSpectate(targetPlayer, mode){
 }
 
 async function loadAndStart(mapMeta, mode, adminOpts){
+  if(loadAndStartInFlight) return;
+  loadAndStartInFlight = true;
   currentMap = mapMeta;
-  
-  
-  
-  
+
+
+
+
   if(!adminOpts) persistCurrentMap(mapMeta.id, mode || 'survival');
   document.getElementById('menu-screen').classList.add('hidden');
   document.getElementById('game-screen').classList.remove('hidden');
@@ -1855,7 +1858,12 @@ async function loadAndStart(mapMeta, mode, adminOpts){
   // (first rAF fires before the paint, second fires after) before that
   // heavy work starts.
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  await startGame(mapMeta, mode || 'survival', adminOpts || null);
+  try{
+    await startGame(mapMeta, mode || 'survival', adminOpts || null);
+  }catch(e){
+    loadAndStartInFlight = false;
+    throw e;
+  }
 }
 
 
@@ -2934,7 +2942,7 @@ async function startGame(mapMeta, mode, adminOpts){
   
   
   const playerDataKey = 'map:'+mapMeta.id+':playerdata:'+(session.username||'guest');
-  const playerDataRaw = await storeGet(playerDataKey, true);
+  const playerDataRaw = adminOpts ? null : await storeGet(playerDataKey, true);
   const savedPlayerData = playerDataRaw ? JSON.parse(playerDataRaw) : null;
 
   
@@ -8411,6 +8419,7 @@ async function startGame(mapMeta, mode, adminOpts){
   }
   let playerDataSaveTimer = null;
   function schedulePlayerDataSave(){
+    if(adminOpts) return;
     clearTimeout(playerDataSaveTimer);
     playerDataSaveTimer = setTimeout(async ()=>{
       await storeSet(playerDataKey, JSON.stringify(playerDataPayload()), true);
@@ -10068,8 +10077,9 @@ async function startGame(mapMeta, mode, adminOpts){
     document.exitPointerLock();
     running = false;
     sessionActive = false;
-    liveCamera = null; 
-    clearPersistedMap(); 
+    liveCamera = null;
+    loadAndStartInFlight = false;
+    clearPersistedMap();
     window.removeEventListener('resize', onResize);
     if(socket){ socket.emit('leave_map'); socket.disconnect(); socket = null; }
     document.getElementById('game-screen').classList.add('hidden');
@@ -10088,7 +10098,7 @@ async function startGame(mapMeta, mode, adminOpts){
     clearTimeout(playerDataSaveTimer);
     await Promise.all([
       storeSet('map:'+mapMeta.id+':diffs', JSON.stringify(diffs), true),
-      storeSet(playerDataKey, JSON.stringify(playerDataPayload()), true),
+      ...(adminOpts ? [] : [storeSet(playerDataKey, JSON.stringify(playerDataPayload()), true)]),
       saveTamedDogsNow()
     ]);
   }
@@ -10123,7 +10133,7 @@ async function startGame(mapMeta, mode, adminOpts){
     };
     await Promise.all([
       restoreKey('map:'+mapMeta.id+':diffs', joinSnapshot.diffs),
-      restoreKey(playerDataKey, joinSnapshot.playerData),
+      ...(adminOpts ? [] : [restoreKey(playerDataKey, joinSnapshot.playerData)]),
       ...JOIN_SNAPSHOT_KEYS.map(k=> restoreKey('map:'+mapMeta.id+':'+k, joinSnapshot[k])),
     ]);
   }
