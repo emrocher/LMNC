@@ -381,6 +381,12 @@
   
   #game-screen{z-index:5;}
   #game-canvas{position:fixed;inset:0;display:block;}
+  #loading-screen{position:fixed;inset:0;z-index:10;background:#0a0906;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;}
+  #loading-screen.hidden{display:none;}
+  #loading-screen .mc-title img{width:260px;max-width:70vw;}
+  #loading-spinner{width:36px;height:36px;border:6px solid #3a352c;border-top-color:var(--ember);animation:loading-spin 0.8s linear infinite;}
+  @keyframes loading-spin{to{transform:rotate(360deg);}}
+  #loading-text{font-family:'Press Start 2P';font-size:11px;color:#cdc8b8;letter-spacing:1px;text-align:center;}
   #hud{position:fixed;top:16px;left:16px;display:flex;flex-direction:column;gap:8px;z-index:6;pointer-events:none;}
   #hearts{display:flex;gap:4px;}
   .heart{font-size:26px;line-height:1;text-shadow:2px 2px 0 var(--border);color:var(--danger);filter:drop-shadow(0 0 0 var(--border));}
@@ -729,6 +735,11 @@
 
 <div id="game-screen" class="screen hidden">
   <canvas id="game-canvas"></canvas>
+  <div id="loading-screen">
+    <div class="mc-title mini"><img src="assets/logo.png" alt="Lucia's Minecraft"></div>
+    <div id="loading-spinner"></div>
+    <p id="loading-text">Loading world...</p>
+  </div>
   <div id="underwater-fx"></div>
   <div id="hud">
     <div id="hearts"></div>
@@ -1833,6 +1844,7 @@ async function loadAndStart(mapMeta, mode, adminOpts){
   if(!adminOpts) persistCurrentMap(mapMeta.id, mode || 'survival');
   document.getElementById('menu-screen').classList.add('hidden');
   document.getElementById('game-screen').classList.remove('hidden');
+  document.getElementById('loading-screen').classList.remove('hidden');
   document.getElementById('hud-worldname').textContent = mapMeta.name;
   await startGame(mapMeta, mode || 'survival', adminOpts || null);
 }
@@ -10040,6 +10052,7 @@ async function startGame(mapMeta, mode, adminOpts){
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
   }
+  document.getElementById('loading-screen').classList.add('hidden');
   loop();
 
   function returnToMenu(){
