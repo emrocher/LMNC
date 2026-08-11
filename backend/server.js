@@ -412,9 +412,14 @@ io.on('connection', (socket) => {
   }
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`Lucia's Minecraft backend listening on http://localhost:${PORT}`);
-  if (!ADMIN_SECRET || ADMIN_USERNAMES.length === 0) {
-    console.log('[admin] ADMIN_USERNAMES and/or ADMIN_SECRET not set — admin features are disabled.');
-  }
+store.init().then(() => {
+  httpServer.listen(PORT, () => {
+    console.log(`Lucia's Minecraft backend listening on http://localhost:${PORT}`);
+    if (!ADMIN_SECRET || ADMIN_USERNAMES.length === 0) {
+      console.log('[admin] ADMIN_USERNAMES and/or ADMIN_SECRET not set — admin features are disabled.');
+    }
+  });
+}).catch((err) => {
+  console.error('[store] failed to initialize, exiting:', err.message);
+  process.exit(1);
 });
