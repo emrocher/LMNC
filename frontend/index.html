@@ -1846,6 +1846,15 @@ async function loadAndStart(mapMeta, mode, adminOpts){
   document.getElementById('game-screen').classList.remove('hidden');
   document.getElementById('loading-screen').classList.remove('hidden');
   document.getElementById('hud-worldname').textContent = mapMeta.name;
+  // startGame() does a big synchronous pass (builds every chunk within
+  // CHUNK_LOAD_RADIUS around the player in one go, ~100+ chunks) before it
+  // ever yields back to the browser - without a real paint in between, the
+  // browser never actually draws the loading screen we just unhid, so the
+  // page just looked frozen/black instead of showing it. Two chained
+  // requestAnimationFrame calls guarantee one full paint has happened
+  // (first rAF fires before the paint, second fires after) before that
+  // heavy work starts.
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   await startGame(mapMeta, mode || 'survival', adminOpts || null);
 }
 
