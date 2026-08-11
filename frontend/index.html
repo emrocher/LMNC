@@ -8579,8 +8579,8 @@ async function startGame(mapMeta, mode, adminOpts){
   
   
   
-  const DAY_TIME_SCALE = 0.08;
-  const NIGHT_TIME_SCALE = 2.5;
+  const DAY_TIME_SCALE = 0.6;
+  const NIGHT_TIME_SCALE = 0.6;
   function localSunHeightAt(elapsedVal){
     const tt = (elapsedVal % DAY_LENGTH) / DAY_LENGTH;
     return Math.sin(tt * Math.PI * 2 - Math.PI / 2);

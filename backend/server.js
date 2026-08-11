@@ -225,8 +225,8 @@ function persistMapClock(mapId) {
 
 
 
-const DAY_TIME_SCALE = 0.08;  
-const NIGHT_TIME_SCALE = 2.5; 
+const DAY_TIME_SCALE = 0.6;
+const NIGHT_TIME_SCALE = 0.6;
 function sunHeightAt(elapsedVal) {
   const t = (elapsedVal % DAY_LENGTH) / DAY_LENGTH;
   const angle = t * Math.PI * 2 - Math.PI / 2;
