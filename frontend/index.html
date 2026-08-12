@@ -2066,39 +2066,20 @@ function loadRealTextureOpaqueOnColor(path, fillColor, size=64){
   img.src = 'assets/textures/'+path;
   return tex;
 }
-function loadTintedTexture(path, tintColor, size=64){
-  const cnv = document.createElement('canvas'); cnv.width=size; cnv.height=size;
-  const ctx = cnv.getContext('2d');
-  const tex = new THREE.CanvasTexture(cnv);
-  tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  const img = new Image();
-  img.onload = ()=>{
-    ctx.drawImage(img, 0, 0, size, size);
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = tintColor;
-    ctx.fillRect(0, 0, size, size);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(0, 0, size, size);
-    tex.needsUpdate = true;
-  };
-  img.src = 'assets/textures/'+path;
-  return tex;
-}
 const dirtTexture = loadRealTexture('blocks/dirt.png');
 const stoneTexture = loadRealTexture('blocks/stone.png');
 const sandTexture = loadRealTexture('blocks/sand.png');
-const cobblestoneTexture = loadTintedTexture('blocks/stone.png', '#a0a49f');
-const obsidianTexture = loadTintedTexture('blocks/stone.png', '#3a2a5c');
-const ironBlockTexture = loadTintedTexture('blocks/stone.png', '#e8ded0');
-const goldBlockTexture = loadTintedTexture('blocks/stone.png', '#f2c94c');
-const diamondBlockTexture = loadTintedTexture('blocks/stone.png', '#6de0e0');
-const emeraldBlockTexture = loadTintedTexture('blocks/stone.png', '#3fcf5f');
-const redstoneBlockTexture = loadTintedTexture('blocks/stone.png', '#c23030');
-const coalBlockTexture = loadTintedTexture('blocks/stone.png', '#3a3a3a');
-const netherrackTexture = loadTintedTexture('blocks/stone.png', '#7a3030');
-const clayBlockTexture = loadTintedTexture('blocks/stone.png', '#aab4bc');
+const cobblestoneTexture = loadRealTexture('blocks/cobblestone.png');
+const obsidianTexture = loadRealTexture('blocks/obsidian.png');
+const ironBlockTexture = loadRealTexture('blocks/iron_block.png');
+const goldBlockTexture = loadRealTexture('blocks/gold_block.png');
+const diamondBlockTexture = loadRealTexture('blocks/diamond_block.png');
+const emeraldBlockTexture = loadRealTexture('blocks/emerald_block.png');
+const redstoneBlockTexture = loadRealTexture('blocks/redstone_block.png');
+const coalBlockTexture = loadRealTexture('blocks/coal_block.png');
+const netherrackTexture = loadRealTexture('blocks/netherrack.png');
+const clayBlockTexture = loadRealTexture('blocks/clay.png');
+const sprucePlanksTexture = loadRealTexture('blocks/spruce_planks.png');
 
 
 function makeSpeckleTexture(base, light, dark, size=16, count=45){
@@ -3537,7 +3518,7 @@ async function startGame(mapMeta, mode, adminOpts){
   
   
   materials[BLOCK.SLAB_OAK_BOTTOM] = stairsMat; materials[BLOCK.SLAB_OAK_TOP] = stairsMat;
-  const spruceSlabMat = new THREE.MeshLambertMaterial({map:spruceWoodTopTexture, color:0xffffff});
+  const spruceSlabMat = new THREE.MeshLambertMaterial({map:sprucePlanksTexture, color:0xffffff});
   materials[BLOCK.SLAB_SPRUCE_BOTTOM] = spruceSlabMat; materials[BLOCK.SLAB_SPRUCE_TOP] = spruceSlabMat;
   const darkTrapdoorMat = new THREE.MeshLambertMaterial({map:darkOakTrapdoorTexture, color:0xffffff});
   materials[BLOCK.TRAPDOOR_BOTTOM] = darkTrapdoorMat; materials[BLOCK.TRAPDOOR_TOP] = darkTrapdoorMat;
