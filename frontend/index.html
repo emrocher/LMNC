@@ -1894,7 +1894,8 @@ DOOR_TOP_N:58, DOOR_TOP_E:59, DOOR_TOP_S:60, DOOR_TOP_W:61,
 DOOR_OPEN_BOTTOM_N:62, DOOR_OPEN_BOTTOM_E:63, DOOR_OPEN_BOTTOM_S:64, DOOR_OPEN_BOTTOM_W:65,
 DOOR_OPEN_TOP_N:66, DOOR_OPEN_TOP_E:67, DOOR_OPEN_TOP_S:68, DOOR_OPEN_TOP_W:69,
 LEAVES_SPRUCE:70, LEAVES_BIRCH:71, LEAVES_JUNGLE:72, LEAVES_DARK_OAK:73, LEAVES_ACACIA:74, LEAVES_MANGROVE:75,
-COBBLESTONE:76, OBSIDIAN:77, IRON_BLOCK:78, GOLD_BLOCK:79, DIAMOND_BLOCK:80, EMERALD_BLOCK:81, REDSTONE_BLOCK:82, COAL_BLOCK:83, NETHERRACK:84, CLAY_BLOCK:85 };
+COBBLESTONE:76, OBSIDIAN:77, IRON_BLOCK:78, GOLD_BLOCK:79, DIAMOND_BLOCK:80, EMERALD_BLOCK:81, REDSTONE_BLOCK:82, COAL_BLOCK:83, NETHERRACK:84, CLAY_BLOCK:85,
+SLAB_SPRUCE_BOTTOM:86, SLAB_SPRUCE_TOP:87 };
 const BLOCK_COLOR = {
   1:0x5c8a3a, 
   2:0x6b4a2f, 
@@ -1951,6 +1952,8 @@ const BLOCK_COLOR = {
   83:0x1c1c1c,
   84:0x6b2b2b,
   85:0x9aa5ad,
+  86:0x8a7a5a,
+  87:0x8a7a5a,
 };
 
 
@@ -2002,8 +2005,9 @@ function isSpruceStairsBlock(v){ return STAIRS_SPRUCE_IDS.indexOf(v)>=0; }
 function isAnySpruceStairsBlock(v){ return STAIRS_SPRUCE_IDS.indexOf(v)>=0 || STAIRS_SPRUCE_TOP_IDS.indexOf(v)>=0; }
 const SLAB_IDS = [BLOCK.SLAB_BOTTOM, BLOCK.SLAB_TOP];
 const SLAB_OAK_IDS = [BLOCK.SLAB_OAK_BOTTOM, BLOCK.SLAB_OAK_TOP];
+const SLAB_SPRUCE_IDS = [BLOCK.SLAB_SPRUCE_BOTTOM, BLOCK.SLAB_SPRUCE_TOP];
 const TRAPDOOR_IDS = [BLOCK.TRAPDOOR_BOTTOM, BLOCK.TRAPDOOR_TOP];
-function isSlabBlock(v){ return SLAB_IDS.indexOf(v)>=0 || SLAB_OAK_IDS.indexOf(v)>=0; }
+function isSlabBlock(v){ return SLAB_IDS.indexOf(v)>=0 || SLAB_OAK_IDS.indexOf(v)>=0 || SLAB_SPRUCE_IDS.indexOf(v)>=0; }
 function isTrapdoorBlock(v){ return TRAPDOOR_IDS.indexOf(v)>=0; }
 function isAnyTrapdoorBlock(v){ return TRAPDOOR_IDS.indexOf(v)>=0 || TRAPDOOR_OPEN_IDS.indexOf(v)>=0; }
 
@@ -2062,19 +2066,39 @@ function loadRealTextureOpaqueOnColor(path, fillColor, size=64){
   img.src = 'assets/textures/'+path;
   return tex;
 }
+function loadTintedTexture(path, tintColor, size=64){
+  const cnv = document.createElement('canvas'); cnv.width=size; cnv.height=size;
+  const ctx = cnv.getContext('2d');
+  const tex = new THREE.CanvasTexture(cnv);
+  tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  const img = new Image();
+  img.onload = ()=>{
+    ctx.drawImage(img, 0, 0, size, size);
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = tintColor;
+    ctx.fillRect(0, 0, size, size);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(0, 0, size, size);
+    tex.needsUpdate = true;
+  };
+  img.src = 'assets/textures/'+path;
+  return tex;
+}
 const dirtTexture = loadRealTexture('blocks/dirt.png');
 const stoneTexture = loadRealTexture('blocks/stone.png');
 const sandTexture = loadRealTexture('blocks/sand.png');
-const cobblestoneTexture = makeSpeckleTexture('#7d7d78', '#9a9a94', '#5a5a54', 16, 70);
-const obsidianTexture = makeSpeckleTexture('#150d24', '#2b1a4a', '#0a0614', 16, 20);
-const ironBlockTexture = makeSpeckleTexture('#d8d8d0', '#eeeee6', '#a8a8a0', 16, 14);
-const goldBlockTexture = makeSpeckleTexture('#f2c94c', '#fde27a', '#c99a20', 16, 12);
-const diamondBlockTexture = makeSpeckleTexture('#6de0e0', '#a8f5f0', '#2ba8a8', 16, 12);
-const emeraldBlockTexture = makeSpeckleTexture('#3fcf5f', '#7dfa9a', '#1f8a3a', 16, 14);
-const redstoneBlockTexture = makeSpeckleTexture('#a81c1c', '#e0392f', '#5c0d0d', 16, 20);
-const coalBlockTexture = makeSpeckleTexture('#1c1c1c', '#333333', '#0a0a0a', 16, 26);
-const netherrackTexture = makeSpeckleTexture('#6b2b2b', '#8a3a3a', '#4a1c1c', 16, 60);
-const clayBlockTexture = makeSpeckleTexture('#9aa5ad', '#b7c1c8', '#7c858c', 16, 30);
+const cobblestoneTexture = loadTintedTexture('blocks/stone.png', '#a0a49f');
+const obsidianTexture = loadTintedTexture('blocks/stone.png', '#3a2a5c');
+const ironBlockTexture = loadTintedTexture('blocks/stone.png', '#e8ded0');
+const goldBlockTexture = loadTintedTexture('blocks/stone.png', '#f2c94c');
+const diamondBlockTexture = loadTintedTexture('blocks/stone.png', '#6de0e0');
+const emeraldBlockTexture = loadTintedTexture('blocks/stone.png', '#3fcf5f');
+const redstoneBlockTexture = loadTintedTexture('blocks/stone.png', '#c23030');
+const coalBlockTexture = loadTintedTexture('blocks/stone.png', '#3a3a3a');
+const netherrackTexture = loadTintedTexture('blocks/stone.png', '#7a3030');
+const clayBlockTexture = loadTintedTexture('blocks/stone.png', '#aab4bc');
 
 
 function makeSpeckleTexture(base, light, dark, size=16, count=45){
@@ -3415,6 +3439,7 @@ async function startGame(mapMeta, mode, adminOpts){
     [BLOCK.FENCE_SPRUCE]: fencePostGeo,
     [BLOCK.SLAB_BOTTOM]: slabBottomGeo, [BLOCK.SLAB_TOP]: slabTopGeo,
     [BLOCK.SLAB_OAK_BOTTOM]: slabBottomGeo, [BLOCK.SLAB_OAK_TOP]: slabTopGeo,
+    [BLOCK.SLAB_SPRUCE_BOTTOM]: slabBottomGeo, [BLOCK.SLAB_SPRUCE_TOP]: slabTopGeo,
     [BLOCK.TRAPDOOR_BOTTOM]: trapdoorBottomGeo, [BLOCK.TRAPDOOR_TOP]: trapdoorTopGeo,
     [BLOCK.SHORT_GRASS]: shortGrassGeo,
     [BLOCK.FLOWER_POT]: flowerPotGeo,
@@ -3512,6 +3537,8 @@ async function startGame(mapMeta, mode, adminOpts){
   
   
   materials[BLOCK.SLAB_OAK_BOTTOM] = stairsMat; materials[BLOCK.SLAB_OAK_TOP] = stairsMat;
+  const spruceSlabMat = new THREE.MeshLambertMaterial({map:spruceWoodTopTexture, color:0xffffff});
+  materials[BLOCK.SLAB_SPRUCE_BOTTOM] = spruceSlabMat; materials[BLOCK.SLAB_SPRUCE_TOP] = spruceSlabMat;
   const darkTrapdoorMat = new THREE.MeshLambertMaterial({map:darkOakTrapdoorTexture, color:0xffffff});
   materials[BLOCK.TRAPDOOR_BOTTOM] = darkTrapdoorMat; materials[BLOCK.TRAPDOOR_TOP] = darkTrapdoorMat;
   for(const id of TRAPDOOR_OPEN_IDS) materials[id] = darkTrapdoorMat;
@@ -3648,6 +3675,7 @@ async function startGame(mapMeta, mode, adminOpts){
     return !!v && v!==BLOCK.WATER && v!==BLOCK.GLASS && v!==BLOCK.FENCE && v!==BLOCK.FENCE_SPRUCE &&
       v!==BLOCK.STAIRS_N && v!==BLOCK.STAIRS_E && v!==BLOCK.STAIRS_S && v!==BLOCK.STAIRS_W &&
       v!==BLOCK.SLAB_BOTTOM && v!==BLOCK.SLAB_TOP && v!==BLOCK.SLAB_OAK_BOTTOM && v!==BLOCK.SLAB_OAK_TOP &&
+      v!==BLOCK.SLAB_SPRUCE_BOTTOM && v!==BLOCK.SLAB_SPRUCE_TOP &&
       v!==BLOCK.TRAPDOOR_BOTTOM && v!==BLOCK.TRAPDOOR_TOP && v!==BLOCK.FLOWER_POT &&
       v!==BLOCK.SHORT_GRASS && STAIRS_TOP_IDS.indexOf(v)<0 && TRAPDOOR_OPEN_IDS.indexOf(v)<0 &&
       STAIRS_SPRUCE_IDS.indexOf(v)<0 && STAIRS_SPRUCE_TOP_IDS.indexOf(v)<0 && DOOR_IDS.indexOf(v)<0;
@@ -4992,7 +5020,7 @@ async function startGame(mapMeta, mode, adminOpts){
   const CREATIVE_CATEGORIES = [
     { name:'Building Blocks', ids:['dirt','stone','sand','glass','brick','mossy_stone','mossy_pave','mossy_stone_turf','snow','lamp','cobblestone','obsidian','netherrack','clay_block'] },
     { name:'Mineral Blocks', ids:['iron_block','gold_block','diamond_block','emerald_block','redstone_block','coal_block'] },
-    { name:'Wood', ids:['wood','planks','spruce_wood','birch_wood','jungle_wood','dark_oak_wood','acacia_wood','mangrove_wood','leaves','leaves_flowering','stairs','stairs_spruce','slab','slab_oak','trapdoor','door','fence','fence_spruce'] },
+    { name:'Wood', ids:['wood','planks','spruce_wood','birch_wood','jungle_wood','dark_oak_wood','acacia_wood','mangrove_wood','leaves','leaves_flowering','stairs','stairs_spruce','slab','slab_oak','slab_spruce','trapdoor','door','fence','fence_spruce'] },
     { name:'Nature', ids:['grass','short_grass','tall_reed','tall_grass_plant','large_fern','vine','weeping_vines','cave_vines','spore_blossom','flower_pot','flower_pot_big'] },
     { name:'Flowers', ids:['plant','poppy','dandelion','cornflower','allium','lily_of_the_valley','azure_bluet','blue_orchid','oxeye_daisy','red_tulip','orange_tulip','white_tulip','pink_tulip','wither_rose','lemon_tulip','green_fern','violet_orchid'] },
     { name:'Food', ids:['meat','fish','coconut'] },
@@ -7109,6 +7137,8 @@ async function startGame(mapMeta, mode, adminOpts){
     }
     const blockType = def.id==='slab_oak'
       ? (useTop ? BLOCK.SLAB_OAK_TOP : BLOCK.SLAB_OAK_BOTTOM)
+      : def.id==='slab_spruce'
+      ? (useTop ? BLOCK.SLAB_SPRUCE_TOP : BLOCK.SLAB_SPRUCE_BOTTOM)
       : (useTop ? BLOCK.SLAB_TOP : BLOCK.SLAB_BOTTOM);
     setBlock(x,y,z,blockType);
     broadcastWorldEvent('block_change', {x,y,z,val:blockType});
@@ -7279,7 +7309,7 @@ async function startGame(mapMeta, mode, adminOpts){
     
     
     
-    return { [BLOCK.DIRT]:0,[BLOCK.STONE]:0,[BLOCK.GRASS]:0,[BLOCK.SAND]:0,[BLOCK.WOOD]:0,[BLOCK.LEAVES]:0,[BLOCK.PLANKS]:0,[BLOCK.LAMP]:0,[BLOCK.GLASS]:0,[BLOCK.BRICK]:0,[BLOCK.MOSSY_STONE]:0,[BLOCK.SNOW]:0,[BLOCK.FENCE]:0,[BLOCK.SLAB_BOTTOM]:0,[BLOCK.SLAB_TOP]:0,[BLOCK.SLAB_OAK_BOTTOM]:0,[BLOCK.SLAB_OAK_TOP]:0,[BLOCK.TRAPDOOR_BOTTOM]:0,[BLOCK.TRAPDOOR_TOP]:0,[BLOCK.FLOWER_POT]:0,[BLOCK.FLOWER_POT_BIG]:0,[BLOCK.MOSSY_PAVE]:0,[BLOCK.MOSSY_STONE_TURF]:0,[BLOCK.WOOD_SPRUCE]:0,[BLOCK.WOOD_BIRCH]:0,[BLOCK.WOOD_JUNGLE]:0,[BLOCK.WOOD_DARK_OAK]:0,[BLOCK.WOOD_ACACIA]:0,[BLOCK.WOOD_MANGROVE]:0,[BLOCK.LEAVES_FLOWERING]:0,[BLOCK.LEAVES_SPRUCE]:0,[BLOCK.LEAVES_BIRCH]:0,[BLOCK.LEAVES_JUNGLE]:0,[BLOCK.LEAVES_DARK_OAK]:0,[BLOCK.LEAVES_ACACIA]:0,[BLOCK.LEAVES_MANGROVE]:0,[BLOCK.SHORT_GRASS]:0,[BLOCK.FENCE_SPRUCE]:0,[BLOCK.COBBLESTONE]:0,[BLOCK.OBSIDIAN]:0,[BLOCK.IRON_BLOCK]:0,[BLOCK.GOLD_BLOCK]:0,[BLOCK.DIAMOND_BLOCK]:0,[BLOCK.EMERALD_BLOCK]:0,[BLOCK.REDSTONE_BLOCK]:0,[BLOCK.COAL_BLOCK]:0,[BLOCK.NETHERRACK]:0,[BLOCK.CLAY_BLOCK]:0, meat:0, plant:0, fish:0, coconut:0, seed:0, snowbag:0, letter:0, picture_of_us:0, lantern:0, zoot:0, stairs:0, stairs_spruce:0, door:0,
+    return { [BLOCK.DIRT]:0,[BLOCK.STONE]:0,[BLOCK.GRASS]:0,[BLOCK.SAND]:0,[BLOCK.WOOD]:0,[BLOCK.LEAVES]:0,[BLOCK.PLANKS]:0,[BLOCK.LAMP]:0,[BLOCK.GLASS]:0,[BLOCK.BRICK]:0,[BLOCK.MOSSY_STONE]:0,[BLOCK.SNOW]:0,[BLOCK.FENCE]:0,[BLOCK.SLAB_BOTTOM]:0,[BLOCK.SLAB_TOP]:0,[BLOCK.SLAB_OAK_BOTTOM]:0,[BLOCK.SLAB_OAK_TOP]:0,[BLOCK.TRAPDOOR_BOTTOM]:0,[BLOCK.TRAPDOOR_TOP]:0,[BLOCK.FLOWER_POT]:0,[BLOCK.FLOWER_POT_BIG]:0,[BLOCK.MOSSY_PAVE]:0,[BLOCK.MOSSY_STONE_TURF]:0,[BLOCK.WOOD_SPRUCE]:0,[BLOCK.WOOD_BIRCH]:0,[BLOCK.WOOD_JUNGLE]:0,[BLOCK.WOOD_DARK_OAK]:0,[BLOCK.WOOD_ACACIA]:0,[BLOCK.WOOD_MANGROVE]:0,[BLOCK.LEAVES_FLOWERING]:0,[BLOCK.LEAVES_SPRUCE]:0,[BLOCK.LEAVES_BIRCH]:0,[BLOCK.LEAVES_JUNGLE]:0,[BLOCK.LEAVES_DARK_OAK]:0,[BLOCK.LEAVES_ACACIA]:0,[BLOCK.LEAVES_MANGROVE]:0,[BLOCK.SHORT_GRASS]:0,[BLOCK.FENCE_SPRUCE]:0,[BLOCK.COBBLESTONE]:0,[BLOCK.OBSIDIAN]:0,[BLOCK.IRON_BLOCK]:0,[BLOCK.GOLD_BLOCK]:0,[BLOCK.DIAMOND_BLOCK]:0,[BLOCK.EMERALD_BLOCK]:0,[BLOCK.REDSTONE_BLOCK]:0,[BLOCK.COAL_BLOCK]:0,[BLOCK.NETHERRACK]:0,[BLOCK.CLAY_BLOCK]:0,[BLOCK.SLAB_SPRUCE_BOTTOM]:0,[BLOCK.SLAB_SPRUCE_TOP]:0, meat:0, plant:0, fish:0, coconut:0, seed:0, snowbag:0, letter:0, picture_of_us:0, lantern:0, zoot:0, stairs:0, stairs_spruce:0, door:0,
       poppy:0, dandelion:0, cornflower:0, allium:0, lily_of_the_valley:0, azure_bluet:0, blue_orchid:0, oxeye_daisy:0, red_tulip:0, orange_tulip:0, white_tulip:0, pink_tulip:0, wither_rose:0, lemon_tulip:0, green_fern:0, violet_orchid:0, ...Object.fromEntries(VINYL_TRACKS.map(v=>[v.id,0])) };
   }
   
@@ -7408,6 +7438,7 @@ async function startGame(mapMeta, mode, adminOpts){
     
     {id:'slab',    blockType:BLOCK.SLAB_BOTTOM, label:'Dark Oak Slab', color:'#4a2f1c'},
     {id:'slab_oak', blockType:BLOCK.SLAB_OAK_BOTTOM, label:'Oak Slab', color:'#c9a06b'},
+    {id:'slab_spruce', blockType:BLOCK.SLAB_SPRUCE_BOTTOM, label:'Spruce Slab', color:'#8a7a5a'},
     {id:'trapdoor',blockType:BLOCK.TRAPDOOR_BOTTOM, label:'Dark Oak Trapdoor', color:'#3a2415'},
     
     
@@ -7695,6 +7726,56 @@ async function startGame(mapMeta, mode, adminOpts){
   }
 
   
+  const blockBreakParticles = [];
+  const breakParticleGeo = new THREE.BoxGeometry(0.14,0.14,0.14);
+  function spawnBlockBreakParticles(x,y,z,blockType){
+    if(!blockType) return;
+    const mat = materials[blockType];
+    let map = null;
+    if(mat){
+      if(Array.isArray(mat)){ const found = mat.find(m=>m && m.map); if(found) map = found.map; }
+      else if(mat.map) map = mat.map;
+    }
+    const color = BLOCK_COLOR[blockType]!==undefined ? BLOCK_COLOR[blockType] : 0xffffff;
+    const count = 9 + Math.floor(Math.random()*4);
+    for(let i=0;i<count;i++){
+      const pmat = map
+        ? new THREE.MeshLambertMaterial({map, color:0xffffff})
+        : new THREE.MeshLambertMaterial({color});
+      const mesh = new THREE.Mesh(breakParticleGeo, pmat);
+      mesh.scale.setScalar(0.35+Math.random()*0.5);
+      mesh.position.set(x+0.5+(Math.random()-0.5)*0.7, y+0.5+(Math.random()-0.5)*0.7, z+0.5+(Math.random()-0.5)*0.7);
+      scene.add(mesh);
+      blockBreakParticles.push({
+        mesh,
+        vx:(Math.random()-0.5)*2.2,
+        vy:1.6+Math.random()*1.6,
+        vz:(Math.random()-0.5)*2.2,
+        spinX:(Math.random()-0.5)*10,
+        spinY:(Math.random()-0.5)*10,
+        age:0,
+        life:0.5+Math.random()*0.4
+      });
+    }
+  }
+  function updateBlockBreakParticles(dt){
+    for(let i=blockBreakParticles.length-1;i>=0;i--){
+      const p = blockBreakParticles[i];
+      p.age += dt;
+      p.vy -= dt*9;
+      p.mesh.position.x += p.vx*dt;
+      p.mesh.position.y += p.vy*dt;
+      p.mesh.position.z += p.vz*dt;
+      p.mesh.rotation.x += p.spinX*dt;
+      p.mesh.rotation.y += p.spinY*dt;
+      if(p.age>=p.life || p.mesh.position.y < -2){
+        scene.remove(p.mesh);
+        p.mesh.material.dispose();
+        blockBreakParticles.splice(i,1);
+      }
+    }
+  }
+
   const heartParticles = [];
   const heartGeo = new THREE.BoxGeometry(0.09,0.09,0.09);
   function spawnHeartBurst(dog){
@@ -8060,6 +8141,7 @@ async function startGame(mapMeta, mode, adminOpts){
       else { topY=y; bottomY=y-1; }
       setBlock(x,bottomY,z,BLOCK.AIR);
       setBlock(x,topY,z,BLOCK.AIR);
+      spawnBlockBreakParticles(x,bottomY,z,b);
       broadcastWorldEvent('block_change', {x,y:bottomY,z,val:BLOCK.AIR});
       broadcastWorldEvent('block_change', {x,y:topY,z,val:BLOCK.AIR});
       player.inventory.door = (player.inventory.door||0)+1;
@@ -8068,6 +8150,7 @@ async function startGame(mapMeta, mode, adminOpts){
       return;
     }
     setBlock(x,y,z,BLOCK.AIR);
+    spawnBlockBreakParticles(x,y,z,b);
     broadcastWorldEvent('block_change', {x,y,z,val:BLOCK.AIR});
     
     
@@ -8080,6 +8163,7 @@ async function startGame(mapMeta, mode, adminOpts){
     else if(TRAPDOOR_OPEN_IDS.indexOf(b)>=0) player.inventory[BLOCK.TRAPDOOR_BOTTOM] = (player.inventory[BLOCK.TRAPDOOR_BOTTOM]||0)+1;
     else if(b===BLOCK.SLAB_TOP) player.inventory[BLOCK.SLAB_BOTTOM] = (player.inventory[BLOCK.SLAB_BOTTOM]||0)+1;
     else if(b===BLOCK.SLAB_OAK_TOP) player.inventory[BLOCK.SLAB_OAK_BOTTOM] = (player.inventory[BLOCK.SLAB_OAK_BOTTOM]||0)+1;
+    else if(b===BLOCK.SLAB_SPRUCE_TOP) player.inventory[BLOCK.SLAB_SPRUCE_BOTTOM] = (player.inventory[BLOCK.SLAB_SPRUCE_BOTTOM]||0)+1;
     else if(player.inventory[b]!==undefined) player.inventory[b]++;
     reloadChunksNear(x,z);
     renderHotbar();
@@ -8136,7 +8220,7 @@ async function startGame(mapMeta, mode, adminOpts){
     if(def.isPicture){ showPicture(); return; }
     if(def.isZoot){ lightZoot(); return; }
     if(def.isStairs){ (def.stairsVariant==='spruce' ? placeStairsSpruce : placeStairs)(); return; }
-    if(def.id==='slab' || def.id==='slab_oak'){ placeSlab(def); return; }
+    if(def.id==='slab' || def.id==='slab_oak' || def.id==='slab_spruce'){ placeSlab(def); return; }
     if(def.special==='door'){ placeDoor(); return; }
     
     
@@ -9384,7 +9468,8 @@ async function startGame(mapMeta, mode, adminOpts){
   function isStepAssistBlock(v){
     return isStairsBlock(v) || STAIRS_TOP_IDS.indexOf(v)>=0 ||
       v===BLOCK.SLAB_BOTTOM || v===BLOCK.SLAB_TOP ||
-      v===BLOCK.SLAB_OAK_BOTTOM || v===BLOCK.SLAB_OAK_TOP;
+      v===BLOCK.SLAB_OAK_BOTTOM || v===BLOCK.SLAB_OAK_TOP ||
+      v===BLOCK.SLAB_SPRUCE_BOTTOM || v===BLOCK.SLAB_SPRUCE_TOP;
   }
   function stairsStepAssist(px, py, pz){
     
@@ -10302,6 +10387,7 @@ async function startGame(mapMeta, mode, adminOpts){
       if(evt.type==='block_change'){
         const oldVal = getBlock(evt.x, evt.y, evt.z);
         if(oldVal===BLOCK.LAMP && evt.val!==BLOCK.LAMP) removeLampLight(evt.x, evt.y, evt.z);
+        if(evt.val===BLOCK.AIR && oldVal) spawnBlockBreakParticles(evt.x, evt.y, evt.z, oldVal);
         setBlock(evt.x, evt.y, evt.z, evt.val);
         if(evt.val===BLOCK.LAMP) addLampLight(evt.x, evt.y, evt.z);
         reloadChunksNear(evt.x, evt.z);
@@ -10468,6 +10554,7 @@ async function startGame(mapMeta, mode, adminOpts){
     updateVisibleChunks(); 
     updateAnimals(dt);
     updateHeartParticles(dt);
+    updateBlockBreakParticles(dt);
     updateDogNametag();
     updateFish(dt);
     updateClouds(dt);
