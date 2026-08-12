@@ -1855,14 +1855,6 @@ async function loadAndStart(mapMeta, mode, adminOpts){
   document.getElementById('game-screen').classList.remove('hidden');
   document.getElementById('loading-screen').classList.remove('hidden');
   document.getElementById('hud-worldname').textContent = mapMeta.name;
-  // startGame() does a big synchronous pass (builds every chunk within
-  // CHUNK_LOAD_RADIUS around the player in one go, ~100+ chunks) before it
-  // ever yields back to the browser - without a real paint in between, the
-  // browser never actually draws the loading screen we just unhid, so the
-  // page just looked frozen/black instead of showing it. Two chained
-  // requestAnimationFrame calls guarantee one full paint has happened
-  // (first rAF fires before the paint, second fires after) before that
-  // heavy work starts.
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   try{
     await startGame(mapMeta, mode || 'survival', adminOpts || null);
@@ -1874,8 +1866,8 @@ async function loadAndStart(mapMeta, mode, adminOpts){
 
 
 
-const WORLD_SIZE = 250;     
-const MAX_Y = 64;
+const WORLD_SIZE = 380;
+const MAX_Y = 96;
 const WATER_LEVEL = 20;
 const PLAYER_RADIUS = 0.3;
 const PLAYER_HEIGHT = 2.0;   
@@ -1901,7 +1893,8 @@ DOOR_BOTTOM_N:54, DOOR_BOTTOM_E:55, DOOR_BOTTOM_S:56, DOOR_BOTTOM_W:57,
 DOOR_TOP_N:58, DOOR_TOP_E:59, DOOR_TOP_S:60, DOOR_TOP_W:61,
 DOOR_OPEN_BOTTOM_N:62, DOOR_OPEN_BOTTOM_E:63, DOOR_OPEN_BOTTOM_S:64, DOOR_OPEN_BOTTOM_W:65,
 DOOR_OPEN_TOP_N:66, DOOR_OPEN_TOP_E:67, DOOR_OPEN_TOP_S:68, DOOR_OPEN_TOP_W:69,
-LEAVES_SPRUCE:70, LEAVES_BIRCH:71, LEAVES_JUNGLE:72, LEAVES_DARK_OAK:73, LEAVES_ACACIA:74, LEAVES_MANGROVE:75 };
+LEAVES_SPRUCE:70, LEAVES_BIRCH:71, LEAVES_JUNGLE:72, LEAVES_DARK_OAK:73, LEAVES_ACACIA:74, LEAVES_MANGROVE:75,
+COBBLESTONE:76, OBSIDIAN:77, IRON_BLOCK:78, GOLD_BLOCK:79, DIAMOND_BLOCK:80, EMERALD_BLOCK:81, REDSTONE_BLOCK:82, COAL_BLOCK:83, NETHERRACK:84, CLAY_BLOCK:85 };
 const BLOCK_COLOR = {
   1:0x5c8a3a, 
   2:0x6b4a2f, 
@@ -1947,7 +1940,17 @@ const BLOCK_COLOR = {
   72:0x4a9c3a, 
   73:0x35521f, 
   74:0x8a9c4a, 
-  75:0x4a8a6a, 
+  75:0x4a8a6a,
+  76:0x8a8a86,
+  77:0x150d24,
+  78:0xd8d8d0,
+  79:0xf2c94c,
+  80:0x6de0e0,
+  81:0x3fcf5f,
+  82:0xa81c1c,
+  83:0x1c1c1c,
+  84:0x6b2b2b,
+  85:0x9aa5ad,
 };
 
 
@@ -2062,6 +2065,16 @@ function loadRealTextureOpaqueOnColor(path, fillColor, size=64){
 const dirtTexture = loadRealTexture('blocks/dirt.png');
 const stoneTexture = loadRealTexture('blocks/stone.png');
 const sandTexture = loadRealTexture('blocks/sand.png');
+const cobblestoneTexture = makeSpeckleTexture('#7d7d78', '#9a9a94', '#5a5a54', 16, 70);
+const obsidianTexture = makeSpeckleTexture('#150d24', '#2b1a4a', '#0a0614', 16, 20);
+const ironBlockTexture = makeSpeckleTexture('#d8d8d0', '#eeeee6', '#a8a8a0', 16, 14);
+const goldBlockTexture = makeSpeckleTexture('#f2c94c', '#fde27a', '#c99a20', 16, 12);
+const diamondBlockTexture = makeSpeckleTexture('#6de0e0', '#a8f5f0', '#2ba8a8', 16, 12);
+const emeraldBlockTexture = makeSpeckleTexture('#3fcf5f', '#7dfa9a', '#1f8a3a', 16, 14);
+const redstoneBlockTexture = makeSpeckleTexture('#a81c1c', '#e0392f', '#5c0d0d', 16, 20);
+const coalBlockTexture = makeSpeckleTexture('#1c1c1c', '#333333', '#0a0a0a', 16, 26);
+const netherrackTexture = makeSpeckleTexture('#6b2b2b', '#8a3a3a', '#4a1c1c', 16, 60);
+const clayBlockTexture = makeSpeckleTexture('#9aa5ad', '#b7c1c8', '#7c858c', 16, 30);
 
 
 function makeSpeckleTexture(base, light, dark, size=16, count=45){
@@ -2445,6 +2458,21 @@ function drawSeedIcon(canvas){
   ctx.fillStyle = '#d79bff';
   ctx.beginPath(); ctx.ellipse(s*0.42,s*0.42,s*0.06,s*0.09,-0.5,0,Math.PI*2); ctx.fill();
 }
+function drawSnowBagIcon(canvas){
+  const ctx = canvas.getContext('2d'); const s = canvas.width;
+  ctx.clearRect(0,0,s,s);
+  ctx.fillStyle = 'rgba(230,240,250,0.35)';
+  ctx.beginPath();
+  ctx.moveTo(s*0.28,s*0.22); ctx.lineTo(s*0.72,s*0.22);
+  ctx.lineTo(s*0.78,s*0.82); ctx.lineTo(s*0.22,s*0.82);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#0a0906'; ctx.lineWidth = Math.max(1,s*0.045);
+  ctx.stroke();
+  ctx.strokeStyle='rgba(10,9,6,0.5)'; ctx.lineWidth = Math.max(1,s*0.03);
+  ctx.beginPath(); ctx.moveTo(s*0.30,s*0.22); ctx.lineTo(s*0.26,s*0.14); ctx.moveTo(s*0.70,s*0.22); ctx.lineTo(s*0.74,s*0.14); ctx.stroke();
+  ctx.fillStyle = '#f7fbff';
+  ctx.beginPath(); ctx.ellipse(s*0.5,s*0.6,s*0.2,s*0.14,0,0,Math.PI*2); ctx.fill();
+}
 function drawCoconutIcon(canvas){
   const ctx = canvas.getContext('2d'); const s = canvas.width;
   ctx.clearRect(0,0,s,s);
@@ -2685,6 +2713,7 @@ function drawItemIcon(canvas, def){
   if(def.potKind){ drawFlowerIcon(canvas, def.color); return; }
   if(def.itemKey==='coconut'){ drawCoconutIcon(canvas); return; }
   if(def.itemKey==='seed'){ drawSeedIcon(canvas); return; }
+  if(def.itemKey==='snowbag'){ drawSnowBagIcon(canvas); return; }
   if(def.special==='turntable'){ drawTurntableIcon(canvas); return; }
   if(def.special==='chest'){ drawChestIcon(canvas); return; }
   if(def.special==='bed'){ drawBedIcon(canvas, def.color); return; }
@@ -2741,15 +2770,36 @@ function fbm(x,z,seed){
   }
   return total/max;
 }
+const _biomeCache = new Map();
+function biomeAt(x,z,seed){
+  const key = x+','+z+','+seed;
+  const cached = _biomeCache.get(key);
+  if(cached !== undefined) return cached;
+  let biome;
+  const mountainNoise = fbm(x*0.0035, z*0.0035, seed+5001);
+  if(mountainNoise > 0.78) biome = 'mountain';
+  else {
+    const temp = fbm(x*0.004, z*0.004, seed+3001);
+    const humid = fbm(x*0.004, z*0.004, seed+7001);
+    if(temp > 0.62 && humid < 0.42) biome = 'desert';
+    else if(temp > 0.55 && humid > 0.55) biome = 'jungle';
+    else biome = 'plains';
+  }
+  if(_biomeCache.size > 200000) _biomeCache.clear();
+  _biomeCache.set(key, biome);
+  return biome;
+}
 function terrainHeight(x,z,seed,type){
   if(type==='flat') return 4;
-  
+
   const continent = fbm(x*0.006, z*0.006, seed+911);
-  
+
   const detail = fbm(x*0.05, z*0.05, seed);
-  
-  const base = (continent-0.4)*95;
-  const h = WATER_LEVEL + base + (detail-0.5)*28;
+  const biome = type==='real' ? biomeAt(x,z,seed) : 'plains';
+  const mountainBonus = biome==='mountain' ? fbm(x*0.02, z*0.02, seed+6001)*58 : 0;
+  const desertFlatten = biome==='desert' ? 0.55 : 1;
+  const base = (continent-0.4)*95*desertFlatten + mountainBonus;
+  const h = WATER_LEVEL + base + (detail-0.5)*28*desertFlatten;
   return Math.max(1, Math.min(MAX_Y-2, Math.round(h)));
 }
 
@@ -2757,12 +2807,14 @@ function terrainHeight(x,z,seed,type){
 
 function surfaceBlockType(x,z,seed,type){
   const h = terrainHeight(x,z,seed,type);
-  if(type==='real' && h < WATER_LEVEL) return BLOCK.SAND;               
-  if(type==='real' && h <= WATER_LEVEL+3) return BLOCK.SAND;            
-  if(type==='real' && h >= 54) return BLOCK.SNOW;                       
-  if(type==='real' && h >= 48){                                         
-    return seededRandom(x,z,seed+77)<0.25 ? BLOCK.MOSSY_STONE : BLOCK.STONE; 
+  if(type!=='real') return BLOCK.GRASS;
+  if(h < WATER_LEVEL) return BLOCK.SAND;
+  if(h <= WATER_LEVEL+3) return BLOCK.SAND;
+  if(h >= 68) return BLOCK.SNOW;
+  if(h >= 58){
+    return seededRandom(x,z,seed+77)<0.25 ? BLOCK.MOSSY_STONE : BLOCK.STONE;
   }
+  if(biomeAt(x,z,seed)==='desert') return BLOCK.SAND;
   return BLOCK.GRASS;
 }
 
@@ -2864,31 +2916,76 @@ const TREE_DENSITY = 260/(WORLD_SIZE*WORLD_SIZE);
 
 function treeOriginAt(ox,oz,seed,type){
   if(type!=='real') return null;
-  if(seededRandom(ox,oz,seed+501) >= TREE_DENSITY) return null; 
+  const biome = biomeAt(ox,oz,seed);
+  const densityMult = biome==='desert' ? 0.03 : biome==='jungle' ? 3.2 : biome==='mountain' ? 0.4 : 1;
+  if(seededRandom(ox,oz,seed+501) >= TREE_DENSITY*densityMult) return null;
   const h = terrainHeight(ox,oz,seed,type);
-  if(h-1>=44) return null; 
-  if(surfaceBlockType(ox,oz,seed,type)!==BLOCK.GRASS) return null; 
-  
-  
-  
+  if(h-1>=54) return null;
+  if(surfaceBlockType(ox,oz,seed,type)!==BLOCK.GRASS) return null;
+
+
+
   const roll = seededRandom(ox,oz,seed+503);
   let species;
-  if(roll<0.30) species='oak';
-  else if(roll<0.45) species='spruce';
-  else if(roll<0.58) species='birch';
-  else if(roll<0.70) species='jungle';
-  else if(roll<0.80) species='dark_oak';
-  else if(roll<0.90) species='acacia';
-  else species='mangrove';
+  if(biome==='jungle'){
+    if(roll<0.78) species='jungle';
+    else if(roll<0.90) species='oak';
+    else species='mangrove';
+  } else {
+    if(roll<0.30) species='oak';
+    else if(roll<0.45) species='spruce';
+    else if(roll<0.58) species='birch';
+    else if(roll<0.70) species='jungle';
+    else if(roll<0.80) species='dark_oak';
+    else if(roll<0.90) species='acacia';
+    else species='mangrove';
+  }
   const [minH,maxH] = TREE_SPECIES_INFO[species].trunkH;
   const trunkH = minH + Math.floor(seededRandom(ox,oz,seed+502)*(maxH-minH+1));
   return {trunkH, species, baseY:h};
+}
+function caveNoise3(x,y,z,seed){
+  const n1 = valueNoise(x*0.08, z*0.08+y*0.35, seed+8001);
+  const n2 = valueNoise(x*0.08+y*0.29, z*0.08, seed+8002);
+  return (n1+n2)*0.5;
+}
+function seededRandom3(x,y,z,seed){
+  const n = Math.sin(x*127.1 + y*191.7 + z*311.7 + seed*74.7)*43758.5453;
+  return n - Math.floor(n);
+}
+function oreForDepth(x,y,z,seed){
+  const r = seededRandom3(x,y,z,seed+9101);
+  if(y<12){
+    if(r<0.006) return BLOCK.DIAMOND_BLOCK;
+    if(r<0.014) return BLOCK.REDSTONE_BLOCK;
+    if(r<0.026) return BLOCK.GOLD_BLOCK;
+    if(r<0.05) return BLOCK.IRON_BLOCK;
+    if(r<0.09) return BLOCK.COAL_BLOCK;
+    if(r<0.16) return BLOCK.COBBLESTONE;
+  } else if(y<28){
+    if(r<0.01) return BLOCK.GOLD_BLOCK;
+    if(r<0.03) return BLOCK.IRON_BLOCK;
+    if(r<0.07) return BLOCK.COAL_BLOCK;
+    if(r<0.14) return BLOCK.COBBLESTONE;
+  } else {
+    if(r<0.02) return BLOCK.IRON_BLOCK;
+    if(r<0.05) return BLOCK.COAL_BLOCK;
+    if(r<0.12) return BLOCK.COBBLESTONE;
+  }
+  return null;
 }
 function genColumn(x,z,seed,type){
   const h = terrainHeight(x,z,seed,type);
   const col = new Array(MAX_Y).fill(BLOCK.AIR);
   for(let y=0;y<h;y++){
-    if(y < h-2) col[y]=BLOCK.STONE;
+    if(y < h-2){
+      if(type==='real' && y>=3 && y<h-6 && caveNoise3(x,y,z,seed)>0.76){
+        col[y] = BLOCK.AIR;
+      } else {
+        const ore = (type==='real') ? oreForDepth(x,y,z,seed) : null;
+        col[y] = ore || BLOCK.STONE;
+      }
+    }
     else if(y < h-1) col[y]=BLOCK.DIRT;
     else col[y] = surfaceBlockType(x,z,seed,type);
   }
@@ -3440,6 +3537,16 @@ async function startGame(mapMeta, mode, adminOpts){
   materials[BLOCK.SNOW] = new THREE.MeshLambertMaterial({map:snowTexture, color:0xffffff});
   materials[BLOCK.MOSSY_PAVE] = new THREE.MeshLambertMaterial({map:mossyPaveTexture, color:0xffffff});
   materials[BLOCK.MOSSY_STONE_TURF] = new THREE.MeshLambertMaterial({map:mossyStoneTurfTexture, color:0xffffff});
+  materials[BLOCK.COBBLESTONE] = new THREE.MeshLambertMaterial({map:cobblestoneTexture, color:0xffffff});
+  materials[BLOCK.OBSIDIAN] = new THREE.MeshLambertMaterial({map:obsidianTexture, color:0xffffff});
+  materials[BLOCK.IRON_BLOCK] = new THREE.MeshLambertMaterial({map:ironBlockTexture, color:0xffffff});
+  materials[BLOCK.GOLD_BLOCK] = new THREE.MeshLambertMaterial({map:goldBlockTexture, color:0xffffff});
+  materials[BLOCK.DIAMOND_BLOCK] = new THREE.MeshLambertMaterial({map:diamondBlockTexture, color:0xffffff});
+  materials[BLOCK.EMERALD_BLOCK] = new THREE.MeshLambertMaterial({map:emeraldBlockTexture, color:0xffffff});
+  materials[BLOCK.REDSTONE_BLOCK] = new THREE.MeshLambertMaterial({map:redstoneBlockTexture, color:0xffffff});
+  materials[BLOCK.COAL_BLOCK] = new THREE.MeshLambertMaterial({map:coalBlockTexture, color:0xffffff});
+  materials[BLOCK.NETHERRACK] = new THREE.MeshLambertMaterial({map:netherrackTexture, color:0xffffff});
+  materials[BLOCK.CLAY_BLOCK] = new THREE.MeshLambertMaterial({map:clayBlockTexture, color:0xffffff});
   
   
   
@@ -4101,7 +4208,13 @@ async function startGame(mapMeta, mode, adminOpts){
   const waterColumns = [];
   function collectWaterColumns(){
     if(mapMeta.type!=='real') return;
-    for(let x=0;x<WORLD_SIZE;x++) for(let z=0;z<WORLD_SIZE;z++){
+
+
+    const wcx = Math.floor(WORLD_SIZE/2), wcz = Math.floor(WORLD_SIZE/2);
+    const WATER_SCAN_RADIUS = 70;
+    const x0 = Math.max(0, wcx-WATER_SCAN_RADIUS), x1 = Math.min(WORLD_SIZE, wcx+WATER_SCAN_RADIUS);
+    const z0 = Math.max(0, wcz-WATER_SCAN_RADIUS), z1 = Math.min(WORLD_SIZE, wcz+WATER_SCAN_RADIUS);
+    for(let x=x0;x<x1;x++) for(let z=z0;z<z1;z++){
       const col = getCol(x,z);
       for(let y=0;y<MAX_Y;y++){ if(col[y]===BLOCK.WATER){ waterColumns.push({x,z,y}); break; } }
     }
@@ -4877,14 +4990,15 @@ async function startGame(mapMeta, mode, adminOpts){
   
   
   const CREATIVE_CATEGORIES = [
-    { name:'Building Blocks', ids:['dirt','stone','sand','glass','brick','mossy_stone','mossy_pave','mossy_stone_turf','snow','lamp'] },
+    { name:'Building Blocks', ids:['dirt','stone','sand','glass','brick','mossy_stone','mossy_pave','mossy_stone_turf','snow','lamp','cobblestone','obsidian','netherrack','clay_block'] },
+    { name:'Mineral Blocks', ids:['iron_block','gold_block','diamond_block','emerald_block','redstone_block','coal_block'] },
     { name:'Wood', ids:['wood','planks','spruce_wood','birch_wood','jungle_wood','dark_oak_wood','acacia_wood','mangrove_wood','leaves','leaves_flowering','stairs','stairs_spruce','slab','slab_oak','trapdoor','door','fence','fence_spruce'] },
     { name:'Nature', ids:['grass','short_grass','tall_reed','tall_grass_plant','large_fern','vine','weeping_vines','cave_vines','spore_blossom','flower_pot','flower_pot_big'] },
     { name:'Flowers', ids:['plant','poppy','dandelion','cornflower','allium','lily_of_the_valley','azure_bluet','blue_orchid','oxeye_daisy','red_tulip','orange_tulip','white_tulip','pink_tulip','wither_rose','lemon_tulip','green_fern','violet_orchid'] },
     { name:'Food', ids:['meat','fish','coconut'] },
     { name:'Furniture & Tools', ids:['turntable','chest','bed_pink','bed_brown','sign','lantern','water_bucket','letter','zoot'] },
     { name:'Music', ids: VINYL_TRACKS.map(v=>v.id) },
-    { name:'Misc', ids:['seed'] },
+    { name:'Misc', ids:['seed','snowbag'] },
   ];
   function renderCreativeCatalog(){
     const container = document.getElementById('creative-grid');
@@ -7141,7 +7255,7 @@ async function startGame(mapMeta, mode, adminOpts){
     
     
     
-    return { [BLOCK.DIRT]:0,[BLOCK.STONE]:0,[BLOCK.GRASS]:0,[BLOCK.SAND]:0,[BLOCK.WOOD]:0,[BLOCK.LEAVES]:0,[BLOCK.PLANKS]:0,[BLOCK.LAMP]:0,[BLOCK.GLASS]:0,[BLOCK.BRICK]:0,[BLOCK.MOSSY_STONE]:0,[BLOCK.SNOW]:0,[BLOCK.FENCE]:0,[BLOCK.SLAB_BOTTOM]:0,[BLOCK.SLAB_TOP]:0,[BLOCK.SLAB_OAK_BOTTOM]:0,[BLOCK.SLAB_OAK_TOP]:0,[BLOCK.TRAPDOOR_BOTTOM]:0,[BLOCK.TRAPDOOR_TOP]:0,[BLOCK.FLOWER_POT]:0,[BLOCK.FLOWER_POT_BIG]:0,[BLOCK.MOSSY_PAVE]:0,[BLOCK.MOSSY_STONE_TURF]:0,[BLOCK.WOOD_SPRUCE]:0,[BLOCK.WOOD_BIRCH]:0,[BLOCK.WOOD_JUNGLE]:0,[BLOCK.WOOD_DARK_OAK]:0,[BLOCK.WOOD_ACACIA]:0,[BLOCK.WOOD_MANGROVE]:0,[BLOCK.LEAVES_FLOWERING]:0,[BLOCK.LEAVES_SPRUCE]:0,[BLOCK.LEAVES_BIRCH]:0,[BLOCK.LEAVES_JUNGLE]:0,[BLOCK.LEAVES_DARK_OAK]:0,[BLOCK.LEAVES_ACACIA]:0,[BLOCK.LEAVES_MANGROVE]:0,[BLOCK.SHORT_GRASS]:0,[BLOCK.FENCE_SPRUCE]:0, meat:0, plant:0, fish:0, coconut:0, seed:0, letter:0, picture_of_us:0, lantern:0, zoot:0, stairs:0, stairs_spruce:0, door:0,
+    return { [BLOCK.DIRT]:0,[BLOCK.STONE]:0,[BLOCK.GRASS]:0,[BLOCK.SAND]:0,[BLOCK.WOOD]:0,[BLOCK.LEAVES]:0,[BLOCK.PLANKS]:0,[BLOCK.LAMP]:0,[BLOCK.GLASS]:0,[BLOCK.BRICK]:0,[BLOCK.MOSSY_STONE]:0,[BLOCK.SNOW]:0,[BLOCK.FENCE]:0,[BLOCK.SLAB_BOTTOM]:0,[BLOCK.SLAB_TOP]:0,[BLOCK.SLAB_OAK_BOTTOM]:0,[BLOCK.SLAB_OAK_TOP]:0,[BLOCK.TRAPDOOR_BOTTOM]:0,[BLOCK.TRAPDOOR_TOP]:0,[BLOCK.FLOWER_POT]:0,[BLOCK.FLOWER_POT_BIG]:0,[BLOCK.MOSSY_PAVE]:0,[BLOCK.MOSSY_STONE_TURF]:0,[BLOCK.WOOD_SPRUCE]:0,[BLOCK.WOOD_BIRCH]:0,[BLOCK.WOOD_JUNGLE]:0,[BLOCK.WOOD_DARK_OAK]:0,[BLOCK.WOOD_ACACIA]:0,[BLOCK.WOOD_MANGROVE]:0,[BLOCK.LEAVES_FLOWERING]:0,[BLOCK.LEAVES_SPRUCE]:0,[BLOCK.LEAVES_BIRCH]:0,[BLOCK.LEAVES_JUNGLE]:0,[BLOCK.LEAVES_DARK_OAK]:0,[BLOCK.LEAVES_ACACIA]:0,[BLOCK.LEAVES_MANGROVE]:0,[BLOCK.SHORT_GRASS]:0,[BLOCK.FENCE_SPRUCE]:0,[BLOCK.COBBLESTONE]:0,[BLOCK.OBSIDIAN]:0,[BLOCK.IRON_BLOCK]:0,[BLOCK.GOLD_BLOCK]:0,[BLOCK.DIAMOND_BLOCK]:0,[BLOCK.EMERALD_BLOCK]:0,[BLOCK.REDSTONE_BLOCK]:0,[BLOCK.COAL_BLOCK]:0,[BLOCK.NETHERRACK]:0,[BLOCK.CLAY_BLOCK]:0, meat:0, plant:0, fish:0, coconut:0, seed:0, snowbag:0, letter:0, picture_of_us:0, lantern:0, zoot:0, stairs:0, stairs_spruce:0, door:0,
       poppy:0, dandelion:0, cornflower:0, allium:0, lily_of_the_valley:0, azure_bluet:0, blue_orchid:0, oxeye_daisy:0, red_tulip:0, orange_tulip:0, white_tulip:0, pink_tulip:0, wither_rose:0, lemon_tulip:0, green_fern:0, violet_orchid:0, ...Object.fromEntries(VINYL_TRACKS.map(v=>[v.id,0])) };
   }
   
@@ -7248,6 +7362,16 @@ async function startGame(mapMeta, mode, adminOpts){
     {id:'dark_oak_leaves', blockType:BLOCK.LEAVES_DARK_OAK, label:'Dark Oak Leaves', color:'#35521f'},
     {id:'acacia_leaves', blockType:BLOCK.LEAVES_ACACIA, label:'Acacia Leaves', color:'#8a9c4a'},
     {id:'mangrove_leaves', blockType:BLOCK.LEAVES_MANGROVE, label:'Mangrove Leaves', color:'#4a8a6a'},
+    {id:'cobblestone', blockType:BLOCK.COBBLESTONE, label:'Cobblestone', color:'#7d7d78'},
+    {id:'obsidian', blockType:BLOCK.OBSIDIAN, label:'Obsidian', color:'#150d24'},
+    {id:'iron_block', blockType:BLOCK.IRON_BLOCK, label:'Block of Iron', color:'#d8d8d0'},
+    {id:'gold_block', blockType:BLOCK.GOLD_BLOCK, label:'Block of Gold', color:'#f2c94c'},
+    {id:'diamond_block', blockType:BLOCK.DIAMOND_BLOCK, label:'Block of Diamond', color:'#6de0e0'},
+    {id:'emerald_block', blockType:BLOCK.EMERALD_BLOCK, label:'Block of Emerald', color:'#3fcf5f'},
+    {id:'redstone_block', blockType:BLOCK.REDSTONE_BLOCK, label:'Block of Redstone', color:'#a81c1c'},
+    {id:'coal_block', blockType:BLOCK.COAL_BLOCK, label:'Block of Coal', color:'#1c1c1c'},
+    {id:'netherrack', blockType:BLOCK.NETHERRACK, label:'Netherrack', color:'#6b2b2b'},
+    {id:'clay_block', blockType:BLOCK.CLAY_BLOCK, label:'Clay', color:'#9aa5ad'},
     
     
     
@@ -7293,6 +7417,7 @@ async function startGame(mapMeta, mode, adminOpts){
     
     
     {id:'seed', itemKey:'seed', label:'Molly', color:'#9b4fd1', gain:0},
+    {id:'snowbag', itemKey:'snowbag', label:'Snow', color:'#eef6fb', gain:0},
     {id:'turntable', special:'turntable', label:'Record Player', color:'#2a2a2a'},
     {id:'chest', special:'chest', label:'Chest', color:'#7a5738'},
     {id:'bed_pink', special:'bed', bedColor:'pink', label:'Pink Bed', color:'#e8639f'},
@@ -7359,7 +7484,7 @@ async function startGame(mapMeta, mode, adminOpts){
   });
   document.addEventListener('mousemove', e=>{
     if(!sessionActive || !pointerLocked || adminPovTargetId) return;
-    const sens = 0.0022*gameSettings.sensitivity;
+    const sens = 0.0022*gameSettings.sensitivity*(snowTripActive?SNOW_TRIP_SENS_MULT:1);
     player.yaw -= e.movementX*sens;
     player.pitch -= e.movementY*sens;
     player.pitch = Math.max(-Math.PI/2+0.02, Math.min(Math.PI/2-0.02, player.pitch));
@@ -7881,6 +8006,18 @@ async function startGame(mapMeta, mode, adminOpts){
     }
     const res = castVoxel();
     if(!res) return;
+    if(res.before){
+      const bx=res.before.x, by=res.before.y, bz=res.before.z;
+      const snowKey = bx+','+bz;
+      if(snowLayers.has(snowKey) && by===topSolidY(bx,bz)+1){
+        const tier = snowLayers.get(snowKey);
+        if(tier<=1) snowLayers.delete(snowKey); else snowLayers.set(snowKey, tier-1);
+        snowLayersDirty = true;
+        if(gameMode!=='creative'){ player.inventory[BLOCK.SNOW] = (player.inventory[BLOCK.SNOW]||0)+1; renderHotbar(); }
+        toast('Snow collected');
+        return;
+      }
+    }
     const {x,y,z} = res.hit;
     const b = getBlock(x,y,z);
     if(!b || b===BLOCK.WATER) return;
@@ -8040,9 +8177,14 @@ async function startGame(mapMeta, mode, adminOpts){
     if(gameMode!=='creative' && invCount(def) <= 0){ toast('Nothing to eat here'); return; }
     if(gameMode!=='creative') player.inventory[def.itemKey]--;
     if(def.id==='seed'){
-      
-      
+
+
       startSeedTrip();
+      renderHotbar();
+      return;
+    }
+    if(def.id==='snowbag'){
+      startSnowTrip();
       renderHotbar();
       return;
     }
@@ -8075,10 +8217,219 @@ async function startGame(mapMeta, mode, adminOpts){
   
   let zootIgnited = false, zootBurnProgress = 0, zootLit = false, zootSmokeTimer = 0;
   let hazeActive = false, hazeTime = 0;
-  
-  
-  
-  
+
+  let weather = 'clear';
+  let weatherTimer = 25 + Math.random()*45;
+  function rollNextWeather(){
+    const r = Math.random();
+    weather = r<0.6 ? 'clear' : (r<0.82 ? 'rain' : 'snow');
+    weatherTimer = weather==='clear' ? (60+Math.random()*120) : (45+Math.random()*90);
+    if(weather==='rain') toast('The weather turns to rain');
+    else if(weather==='snow') toast("It's starting to snow");
+    else if(weather==='clear') toast('The sky clears up');
+  }
+  function updateWeather(dt){
+    weatherTimer -= dt;
+    if(weatherTimer<=0) rollNextWeather();
+  }
+
+  function makeRainDropTexture(){
+    const cnv=document.createElement('canvas'); cnv.width=8; cnv.height=16;
+    const ctx=cnv.getContext('2d');
+    const grad = ctx.createLinearGradient(0,0,0,16);
+    grad.addColorStop(0,'rgba(180,210,255,0)');
+    grad.addColorStop(0.5,'rgba(180,210,255,0.85)');
+    grad.addColorStop(1,'rgba(210,230,255,0.95)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(2,0,4,16);
+    const tex = new THREE.CanvasTexture(cnv);
+    tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+    return tex;
+  }
+  function makeSnowflakeTexture(){
+    const size=8;
+    const cnv=document.createElement('canvas'); cnv.width=size; cnv.height=size;
+    const ctx=cnv.getContext('2d');
+    ctx.clearRect(0,0,size,size);
+    ctx.fillStyle='rgba(255,255,255,0.55)';
+    ctx.beginPath(); ctx.arc(size/2,size/2,size*0.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath(); ctx.arc(size/2,size/2,size*0.32,0,Math.PI*2); ctx.fill();
+    const tex = new THREE.CanvasTexture(cnv);
+    tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+    return tex;
+  }
+  const WEATHER_PARTICLE_RADIUS = 22;
+  const RAIN_COUNT = 260;
+  const SNOW_COUNT = 180;
+  const rainDropTexture = makeRainDropTexture();
+  const snowflakeTexture = makeSnowflakeTexture();
+  const rainGeo = new THREE.BoxGeometry(0.035, 0.55, 0.035);
+  const rainMat = new THREE.MeshBasicMaterial({map:rainDropTexture, transparent:true, opacity:0.75, depthWrite:false, fog:false});
+  const rainMesh = new THREE.InstancedMesh(rainGeo, rainMat, RAIN_COUNT);
+  rainMesh.count = 0; rainMesh.visible = false; rainMesh.frustumCulled = false;
+  scene.add(rainMesh);
+  const snowFallGeo = new THREE.BoxGeometry(0.09, 0.09, 0.09);
+  const snowFallMat = new THREE.MeshBasicMaterial({map:snowflakeTexture, transparent:true, depthWrite:false, fog:false});
+  const snowFallMesh = new THREE.InstancedMesh(snowFallGeo, snowFallMat, SNOW_COUNT);
+  snowFallMesh.count = 0; snowFallMesh.visible = false; snowFallMesh.frustumCulled = false;
+  scene.add(snowFallMesh);
+  function spawnWeatherParticle(){
+    const ang = Math.random()*Math.PI*2, r = Math.random()*WEATHER_PARTICLE_RADIUS;
+    return {
+      x: player.x + Math.cos(ang)*r,
+      z: player.z + Math.sin(ang)*r,
+      y: player.y + 10 + Math.random()*8,
+      sway: (Math.random()-0.5)*0.6
+    };
+  }
+  const rainDrops = []; for(let i=0;i<RAIN_COUNT;i++) rainDrops.push(spawnWeatherParticle());
+  const snowFlakes = []; for(let i=0;i<SNOW_COUNT;i++) snowFlakes.push(spawnWeatherParticle());
+  const weatherDummy = new THREE.Object3D();
+  function updateWeatherParticles(dt){
+    const raining = weather==='rain';
+    const snowing = weather==='snow';
+    rainMesh.visible = raining;
+    snowFallMesh.visible = snowing;
+    if(raining){
+      rainMesh.count = RAIN_COUNT;
+      for(let i=0;i<RAIN_COUNT;i++){
+        const p = rainDrops[i];
+        p.y -= dt*28;
+        const groundY = topSolidY(Math.floor(p.x), Math.floor(p.z))+1;
+        if(p.y < groundY || p.y < player.y-10 || Math.hypot(p.x-player.x, p.z-player.z) > WEATHER_PARTICLE_RADIUS+2){
+          const np = spawnWeatherParticle();
+          p.x=np.x; p.y=np.y; p.z=np.z;
+        }
+        weatherDummy.position.set(p.x, p.y, p.z);
+        weatherDummy.updateMatrix();
+        rainMesh.setMatrixAt(i, weatherDummy.matrix);
+      }
+      rainMesh.instanceMatrix.needsUpdate = true;
+    }
+    if(snowing){
+      snowFallMesh.count = SNOW_COUNT;
+      const t = performance.now()*0.001;
+      for(let i=0;i<SNOW_COUNT;i++){
+        const p = snowFlakes[i];
+        p.y -= dt*2.2;
+        p.x += Math.sin(t*0.8+i)*dt*p.sway;
+        p.z += Math.cos(t*0.7+i)*dt*p.sway;
+        const groundY = topSolidY(Math.floor(p.x), Math.floor(p.z))+1;
+        if(p.y < groundY || p.y < player.y-10 || Math.hypot(p.x-player.x, p.z-player.z) > WEATHER_PARTICLE_RADIUS+2){
+          const np = spawnWeatherParticle();
+          p.x=np.x; p.y=np.y; p.z=np.z;
+        }
+        weatherDummy.position.set(p.x, p.y, p.z);
+        weatherDummy.updateMatrix();
+        snowFallMesh.setMatrixAt(i, weatherDummy.matrix);
+      }
+      snowFallMesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
+  const SNOW_LAYER_MAX_TIER = 3;
+  const SNOW_LAYER_CAP = 2600;
+  const snowLayers = new Map();
+  let snowLayersDirty = false;
+  const snowTierGeo = [null,
+    (()=>{ const b=new THREE.BoxGeometry(1,0.1875,1); b.translate(0,-0.40625,0); return b; })(),
+    (()=>{ const b=new THREE.BoxGeometry(1,0.375,1); b.translate(0,-0.3125,0); return b; })(),
+    (()=>{ const b=new THREE.BoxGeometry(1,0.5625,1); b.translate(0,-0.21875,0); return b; })()
+  ];
+  const snowOverlayMat = new THREE.MeshLambertMaterial({map:snowTexture, color:0xffffff});
+  const snowOverlayMeshes = [null,
+    new THREE.InstancedMesh(snowTierGeo[1], snowOverlayMat, SNOW_LAYER_CAP),
+    new THREE.InstancedMesh(snowTierGeo[2], snowOverlayMat, SNOW_LAYER_CAP),
+    new THREE.InstancedMesh(snowTierGeo[3], snowOverlayMat, SNOW_LAYER_CAP)
+  ];
+  for(let i=1;i<=3;i++){
+    snowOverlayMeshes[i].count = 0;
+    snowOverlayMeshes[i].castShadow = true;
+    snowOverlayMeshes[i].receiveShadow = true;
+    worldGroup.add(snowOverlayMeshes[i]);
+  }
+  const snowOverlayDummy = new THREE.Object3D();
+  function rebuildSnowOverlayMesh(){
+    snowLayersDirty = false;
+    const counts = [0,0,0,0];
+    for(const [key, tier] of snowLayers){
+      if(counts[tier] >= SNOW_LAYER_CAP) continue;
+      const parts = key.split(',');
+      const x = +parts[0], z = +parts[1];
+      const y = topSolidY(x,z)+1;
+      snowOverlayDummy.position.set(x+0.5, y+0.5, z+0.5);
+      snowOverlayDummy.updateMatrix();
+      snowOverlayMeshes[tier].setMatrixAt(counts[tier], snowOverlayDummy.matrix);
+      counts[tier]++;
+    }
+    for(let i=1;i<=3;i++){
+      snowOverlayMeshes[i].count = counts[i];
+      snowOverlayMeshes[i].instanceMatrix.needsUpdate = true;
+    }
+  }
+  function snowAccumulateTick(){
+    if(snowLayers.size >= SNOW_LAYER_CAP) return;
+    const chunkKeys = Array.from(chunks.keys());
+    if(chunkKeys.length===0) return;
+    const budget = 40;
+    let processed = 0, attempts = 0;
+    while(processed < budget && attempts < budget*3 && snowLayers.size < SNOW_LAYER_CAP){
+      attempts++;
+      const ck = chunkKeys[Math.floor(Math.random()*chunkKeys.length)];
+      const [ccx,ccz] = ck.split(',').map(Number);
+      const x = ccx*CHUNK_SIZE + Math.floor(Math.random()*CHUNK_SIZE);
+      const z = ccz*CHUNK_SIZE + Math.floor(Math.random()*CHUNK_SIZE);
+      if(!inBounds(x,z)) continue;
+      const topY = topSolidY(x,z);
+      if(topY<0 || topY>=MAX_Y-1) continue;
+      if(getBlock(x,topY,z)===BLOCK.WATER) continue;
+      if(getBlock(x,topY+1,z)!==BLOCK.AIR) continue;
+      const key = x+','+z;
+      const cur = snowLayers.get(key)||0;
+      if(cur>=SNOW_LAYER_MAX_TIER) continue;
+      snowLayers.set(key, cur+1);
+      processed++;
+      snowLayersDirty = true;
+    }
+  }
+  function snowMeltTick(){
+    if(snowLayers.size===0) return;
+    const keys = Array.from(snowLayers.keys());
+    const budget = 60;
+    let processed = 0;
+    for(let i=0;i<keys.length && processed<budget;i++){
+      if(Math.random()<0.5) continue;
+      const key = keys[i];
+      const cur = snowLayers.get(key);
+      if(cur<=1) snowLayers.delete(key); else snowLayers.set(key, cur-1);
+      processed++;
+      snowLayersDirty = true;
+    }
+  }
+  function pruneSnowLayersOutOfRange(){
+    if(snowLayers.size===0) return;
+    for(const key of Array.from(snowLayers.keys())){
+      const parts = key.split(',');
+      const [ccx,ccz] = chunkOfBlock(+parts[0], +parts[1]);
+      if(!chunks.has(chunkKey(ccx,ccz))){ snowLayers.delete(key); snowLayersDirty = true; }
+    }
+  }
+  let snowTickTimer = 0;
+  function updateSnowOverlay(dt){
+    snowTickTimer -= dt;
+    if(snowTickTimer<=0){
+      snowTickTimer = 0.4;
+      if(weather==='snow') snowAccumulateTick(); else snowMeltTick();
+      pruneSnowLayersOutOfRange();
+    }
+    if(snowLayersDirty) rebuildSnowOverlayMesh();
+  }
+
+
+
+
+
   
   
   
@@ -8394,6 +8745,29 @@ async function startGame(mapMeta, mode, adminOpts){
     if(seedTripTime<=0){
       seedTripActive = false;
       toast('Feeling normal again');
+    }
+  }
+
+  function snowTripDuration(){ return DAY_LENGTH/24; }
+  let snowTripActive = false, snowTripTime = 0;
+  const SNOW_TRIP_FOV_BOOST = 25;
+  const SNOW_TRIP_SENS_MULT = 1.6;
+  const SNOW_TRIP_SPEED_MULT = 1.5;
+  function startSnowTrip(){
+    snowTripActive = true;
+    snowTripTime = snowTripDuration();
+    toast('Feeling fast — FOV, sensitivity and speed boosted!');
+  }
+  function updateSnowTrip(dt){
+    if(!snowTripActive) return;
+    snowTripTime -= dt;
+    camera.fov = gameSettings.fov + SNOW_TRIP_FOV_BOOST;
+    camera.updateProjectionMatrix();
+    if(snowTripTime<=0){
+      snowTripActive = false;
+      camera.fov = gameSettings.fov;
+      camera.updateProjectionMatrix();
+      toast('Coming down...');
     }
   }
 
@@ -8791,16 +9165,27 @@ async function startGame(mapMeta, mode, adminOpts){
       skyDomeMat.uniforms.topColor.value.copy(underCol);
       skyDomeMat.uniforms.horizonColor.value.copy(underCol);
     } else {
-      
-      
-      
-      
-      scene.background = zenithCol;
-      scene.fog.color = horizonCol;
-      scene.fog.near = FOG_AIR.near;
-      scene.fog.far = FOG_AIR.far;
-      skyDomeMat.uniforms.topColor.value.copy(zenithCol);
-      skyDomeMat.uniforms.horizonColor.value.copy(horizonCol);
+      let fHorizon = horizonCol, fZenith = zenithCol;
+      let fogNear = FOG_AIR.near, fogFar = FOG_AIR.far;
+      if(weather==='rain'){
+        const rainGray = new THREE.Color(0x4a5560);
+        fHorizon = horizonCol.clone().lerp(rainGray, 0.6);
+        fZenith = zenithCol.clone().lerp(rainGray, 0.55);
+        fogFar = FOG_AIR.far*0.55;
+        fogNear = FOG_AIR.near*0.5;
+      } else if(weather==='snow'){
+        const snowGray = new THREE.Color(0xcfd8e0);
+        fHorizon = horizonCol.clone().lerp(snowGray, 0.45);
+        fZenith = zenithCol.clone().lerp(snowGray, 0.4);
+        fogFar = FOG_AIR.far*0.7;
+        fogNear = FOG_AIR.near*0.6;
+      }
+      scene.background = fZenith;
+      scene.fog.color = fHorizon;
+      scene.fog.near = fogNear;
+      scene.fog.far = fogFar;
+      skyDomeMat.uniforms.topColor.value.copy(fZenith);
+      skyDomeMat.uniforms.horizonColor.value.copy(fHorizon);
     }
     skyDome.position.set(player.x, 0, player.z);
     
@@ -9004,7 +9389,7 @@ async function startGame(mapMeta, mode, adminOpts){
     const fwd = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
     const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
 
-    let speed = (gameMode==='creative' ? 9 : (player.underwater ? 2.2 : 2.4)) * gameSettings.speed; 
+    let speed = (gameMode==='creative' ? 9 : (player.underwater ? 2.2 : 2.4)) * gameSettings.speed * (snowTripActive?SNOW_TRIP_SPEED_MULT:1);
     
     
     if(keys['ShiftLeft'] || keys['ShiftRight']) speed *= 1.6;
@@ -10065,6 +10450,10 @@ async function startGame(mapMeta, mode, adminOpts){
     updateFallingLeaves(dt);
     updateZoot(dt);
     updateSeedTrip(dt);
+    updateSnowTrip(dt);
+    updateWeather(dt);
+    updateWeatherParticles(dt);
+    updateSnowOverlay(dt);
     updateCanvasFilter();
     updateOtherPlayersAnimation(dt);
     updateOtherPlayersSmoke(dt);
