@@ -7093,6 +7093,30 @@ async function startGame(mapMeta, mode, adminOpts){
   function placeStairs(){ placeStairsVariant('stairs', STAIRS_IDS, STAIRS_TOP_IDS, 'stairs'); }
   function placeStairsSpruce(){ placeStairsVariant('stairs_spruce', STAIRS_SPRUCE_IDS, STAIRS_SPRUCE_TOP_IDS, 'spruce stairs'); }
 
+  function placeSlab(def){
+    const res = castVoxel();
+    if(!res || !res.before) return;
+    if(gameMode!=='creative' && invCount(def)<=0){ toast('Out of this block'); return; }
+    const {x,y,z} = res.before;
+    if(x<0||z<0||x>=WORLD_SIZE||z>=WORLD_SIZE) return;
+    if(overlapsPlayerFootprint(x,y,z)) return;
+    let useTop;
+    if(res.before.y > res.hit.y) useTop = false;
+    else if(res.before.y < res.hit.y) useTop = true;
+    else {
+      const fracY = (res.hitPoint ? res.hitPoint.y : res.hit.y+0.5) - res.hit.y;
+      useTop = fracY >= 0.5;
+    }
+    const blockType = def.id==='slab_oak'
+      ? (useTop ? BLOCK.SLAB_OAK_TOP : BLOCK.SLAB_OAK_BOTTOM)
+      : (useTop ? BLOCK.SLAB_TOP : BLOCK.SLAB_BOTTOM);
+    setBlock(x,y,z,blockType);
+    broadcastWorldEvent('block_change', {x,y,z,val:blockType});
+    if(gameMode!=='creative') player.inventory[def.blockType]--;
+    reloadChunksNear(x,z);
+    renderHotbar();
+  }
+
   
   function findTargetedTrapdoor(){
     const res = castVoxel();
@@ -7633,7 +7657,7 @@ async function startGame(mapMeta, mode, adminOpts){
       const x = Math.floor(px), y = Math.floor(py), z = Math.floor(pz);
       const b = getBlock(x,y,z);
       if(b && b!==BLOCK.WATER){
-        return { hit:{x,y,z}, before:lastAir };
+        return { hit:{x,y,z}, before:lastAir, hitPoint:{x:px,y:py,z:pz} };
       }
       lastAir = {x,y,z};
       px += dir.x*step; py += dir.y*step; pz += dir.z*step;
@@ -8054,6 +8078,8 @@ async function startGame(mapMeta, mode, adminOpts){
     if(isAnyStairsBlock(b)) player.inventory.stairs = (player.inventory.stairs||0)+1;
     else if(isAnySpruceStairsBlock(b)) player.inventory.stairs_spruce = (player.inventory.stairs_spruce||0)+1;
     else if(TRAPDOOR_OPEN_IDS.indexOf(b)>=0) player.inventory[BLOCK.TRAPDOOR_BOTTOM] = (player.inventory[BLOCK.TRAPDOOR_BOTTOM]||0)+1;
+    else if(b===BLOCK.SLAB_TOP) player.inventory[BLOCK.SLAB_BOTTOM] = (player.inventory[BLOCK.SLAB_BOTTOM]||0)+1;
+    else if(b===BLOCK.SLAB_OAK_TOP) player.inventory[BLOCK.SLAB_OAK_BOTTOM] = (player.inventory[BLOCK.SLAB_OAK_BOTTOM]||0)+1;
     else if(player.inventory[b]!==undefined) player.inventory[b]++;
     reloadChunksNear(x,z);
     renderHotbar();
@@ -8110,6 +8136,7 @@ async function startGame(mapMeta, mode, adminOpts){
     if(def.isPicture){ showPicture(); return; }
     if(def.isZoot){ lightZoot(); return; }
     if(def.isStairs){ (def.stairsVariant==='spruce' ? placeStairsSpruce : placeStairs)(); return; }
+    if(def.id==='slab' || def.id==='slab_oak'){ placeSlab(def); return; }
     if(def.special==='door'){ placeDoor(); return; }
     
     
