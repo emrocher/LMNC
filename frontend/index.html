@@ -490,6 +490,20 @@
   .creative-cell .cc-icon{display:flex;justify-content:center;margin-bottom:4px;}
   .creative-cell .cc-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
+  .craft-row{display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:14px;}
+  .craft-row-compact{flex-direction:column;gap:8px;}
+  .craft-grid-2{display:grid;grid-template-columns:repeat(2,56px);grid-template-rows:repeat(2,56px);gap:6px;}
+  .craft-grid-3{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px;}
+  .craft-arrow{font-size:26px;color:var(--stone-lo);}
+  .hb-slot.craft-picked{border-color:var(--ember);box-shadow:0 0 0 2px var(--ember);}
+  .hb-slot.craft-output{border-color:#7a9a5a;}
+  .hb-slot.craft-output.ready{border-color:var(--ember);box-shadow:0 0 8px var(--ember);cursor:pointer;}
+  .recipe-list{max-height:360px;overflow-y:auto;padding-right:4px;}
+  .recipe-entry{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:2px solid var(--border);padding:6px 8px;margin-bottom:6px;cursor:pointer;font-size:11px;}
+  .recipe-entry:hover{border-color:var(--ember);}
+  .recipe-entry.active{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember);}
+  #craft-search{width:100%;box-sizing:border-box;margin-bottom:10px;padding:8px;background:var(--panel-2);border:2px solid var(--border);color:inherit;font-family:inherit;font-size:11px;}
+
   .skin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-height:420px;overflow-y:auto;padding:4px 4px 4px 0;}
   .skin-card{background:var(--panel-2);border:2px solid var(--border);padding:10px 6px;text-align:center;font-size:12px;cursor:pointer;}
   .skin-card:hover{border-color:var(--ember);}
@@ -780,12 +794,44 @@
         <h3>All Blocks &amp; Items</h3>
         <div id="creative-grid" class="creative-categories"></div>
       </div>
+      <div class="chest-col hidden" id="inv-craft-col">
+        <h3>Crafting</h3>
+        <div class="craft-row craft-row-compact">
+          <div id="personal-craft-grid" class="craft-grid-2"></div>
+          <div class="craft-arrow">&#8595;</div>
+          <div id="personal-craft-output"></div>
+        </div>
+      </div>
       <div class="chest-col">
         <div id="inv-hotbar-row" class="inv-hotbar-row"></div>
         <div id="inv-grid" class="inv-slots-grid"></div>
       </div>
     </div>
     <button id="close-inv-btn" class="btn" style="width:100%;margin-top:16px;">Close (E)</button>
+  </div>
+</div>
+
+<div id="craft-table-overlay" class="hidden">
+  <div class="panel" style="width:760px;">
+    <h2>Crafting Table</h2>
+    <p class="shared-note" style="margin-top:-8px;">Click a recipe to see its pattern, click your items then a grid cell to place them, click the output to collect it.</p>
+    <div class="chest-columns">
+      <div class="chest-col">
+        <input id="craft-search" type="text" placeholder="Search recipes...">
+        <div id="craft-pattern-hint"></div>
+        <div id="craft-recipe-list" class="recipe-list"></div>
+      </div>
+      <div class="chest-col">
+        <div class="craft-row">
+          <div id="table-craft-grid" class="craft-grid-3"></div>
+          <div class="craft-arrow">&#8594;</div>
+          <div id="table-craft-output"></div>
+        </div>
+        <div id="craft-hotbar-row" class="inv-hotbar-row"></div>
+        <div id="craft-player-items" class="inv-slots-grid"></div>
+      </div>
+    </div>
+    <button id="close-craft-btn" class="btn" style="width:100%;margin-top:16px;">Close</button>
   </div>
 </div>
 
@@ -1897,7 +1943,8 @@ LEAVES_SPRUCE:70, LEAVES_BIRCH:71, LEAVES_JUNGLE:72, LEAVES_DARK_OAK:73, LEAVES_
 COBBLESTONE:76, OBSIDIAN:77, IRON_BLOCK:78, GOLD_BLOCK:79, DIAMOND_BLOCK:80, EMERALD_BLOCK:81, REDSTONE_BLOCK:82, COAL_BLOCK:83, NETHERRACK:84, CLAY_BLOCK:85,
 SLAB_SPRUCE_BOTTOM:86, SLAB_SPRUCE_TOP:87,
 GRAVEL:88, ANDESITE:89, DIORITE:90, GRANITE:91, SANDSTONE:92, BOOKSHELF:93, NETHER_BRICKS:94, QUARTZ_BLOCK:95, SEA_LANTERN:96, HAY_BALE:97, ICE:98, WOOL_WHITE:99, WOOL_RED:100, WOOL_BLUE:101,
-CORAL_TUBE:102, CORAL_BRAIN:103, CORAL_BUBBLE:104, CORAL_FIRE:105, CORAL_HORN:106, SEAGRASS:107 };
+CORAL_TUBE:102, CORAL_BRAIN:103, CORAL_BUBBLE:104, CORAL_FIRE:105, CORAL_HORN:106, SEAGRASS:107,
+CRAFTING_TABLE:108 };
 const BLOCK_COLOR = {
   1:0x5c8a3a, 
   2:0x6b4a2f, 
@@ -1976,6 +2023,7 @@ const BLOCK_COLOR = {
   105:0xc9302f,
   106:0xe0c23c,
   107:0x3a7a4a,
+  108:0x8a6a3f,
 };
 
 
@@ -2032,6 +2080,94 @@ const TRAPDOOR_IDS = [BLOCK.TRAPDOOR_BOTTOM, BLOCK.TRAPDOOR_TOP];
 function isSlabBlock(v){ return SLAB_IDS.indexOf(v)>=0 || SLAB_OAK_IDS.indexOf(v)>=0 || SLAB_SPRUCE_IDS.indexOf(v)>=0; }
 function isTrapdoorBlock(v){ return TRAPDOOR_IDS.indexOf(v)>=0; }
 function isAnyTrapdoorBlock(v){ return TRAPDOOR_IDS.indexOf(v)>=0 || TRAPDOOR_OPEN_IDS.indexOf(v)>=0; }
+
+const WOOD_LIKE_IDS = new Set([
+  BLOCK.WOOD, BLOCK.WOOD_SPRUCE, BLOCK.WOOD_BIRCH, BLOCK.WOOD_JUNGLE, BLOCK.WOOD_DARK_OAK, BLOCK.WOOD_ACACIA, BLOCK.WOOD_MANGROVE,
+  BLOCK.PLANKS, BLOCK.FENCE, BLOCK.FENCE_SPRUCE, BLOCK.BOOKSHELF, BLOCK.HAY_BALE, BLOCK.CRAFTING_TABLE,
+  ...SLAB_IDS, ...SLAB_OAK_IDS, ...SLAB_SPRUCE_IDS, ...TRAPDOOR_IDS, ...TRAPDOOR_OPEN_IDS,
+  ...STAIRS_IDS, ...STAIRS_TOP_IDS, ...STAIRS_SPRUCE_IDS, ...STAIRS_SPRUCE_TOP_IDS, ...DOOR_IDS,
+]);
+const PICKAXE_MINED_IDS = new Set([
+  BLOCK.STONE, BLOCK.COBBLESTONE, BLOCK.MOSSY_STONE, BLOCK.MOSSY_PAVE, BLOCK.ANDESITE, BLOCK.DIORITE, BLOCK.GRANITE,
+  BLOCK.QUARTZ_BLOCK, BLOCK.NETHERRACK, BLOCK.NETHER_BRICKS, BLOCK.BRICK, BLOCK.SANDSTONE, BLOCK.SEA_LANTERN,
+  BLOCK.CORAL_TUBE, BLOCK.CORAL_BRAIN, BLOCK.CORAL_BUBBLE, BLOCK.CORAL_FIRE, BLOCK.CORAL_HORN, BLOCK.OBSIDIAN,
+  BLOCK.IRON_BLOCK, BLOCK.GOLD_BLOCK, BLOCK.DIAMOND_BLOCK, BLOCK.EMERALD_BLOCK, BLOCK.REDSTONE_BLOCK, BLOCK.COAL_BLOCK,
+]);
+const SHOVEL_MINED_IDS = new Set([
+  BLOCK.DIRT, BLOCK.SAND, BLOCK.GRAVEL, BLOCK.GRASS, BLOCK.SNOW, BLOCK.CLAY_BLOCK, BLOCK.MOSSY_STONE_TURF,
+]);
+const TOOL_TIER_SPEED = { wood:2, stone:3.5, iron:5.5, diamond:8 };
+function blockHardness(v){
+  if(v===BLOCK.OBSIDIAN) return {seconds:14, tool:'pickaxe'};
+  if(v===BLOCK.IRON_BLOCK||v===BLOCK.GOLD_BLOCK||v===BLOCK.DIAMOND_BLOCK||v===BLOCK.EMERALD_BLOCK||v===BLOCK.REDSTONE_BLOCK||v===BLOCK.COAL_BLOCK){
+    return {seconds:9, tool:'pickaxe'};
+  }
+  if(PICKAXE_MINED_IDS.has(v)) return {seconds:5.5, tool:'pickaxe'};
+  if(WOOD_LIKE_IDS.has(v)) return {seconds:3, tool:'axe'};
+  if(SHOVEL_MINED_IDS.has(v)) return {seconds:0.6, tool:'shovel'};
+  if(v===BLOCK.ICE) return {seconds:2.5, tool:'pickaxe'};
+  if(v===BLOCK.WOOL_WHITE||v===BLOCK.WOOL_RED||v===BLOCK.WOOL_BLUE) return {seconds:0.7, tool:null};
+  if(LEAF_BLOCK_IDS.indexOf(v)>=0 || v===BLOCK.SHORT_GRASS || v===BLOCK.SEAGRASS || v===BLOCK.FLOWER_POT || v===BLOCK.FLOWER_POT_BIG || v===BLOCK.GLASS){
+    return {seconds:0.35, tool:null};
+  }
+  return {seconds:1.2, tool:null};
+}
+function miningSecondsFor(blockType, toolDef){
+  const hard = blockHardness(blockType);
+  if(!toolDef || !toolDef.toolType || toolDef.toolType!==hard.tool) return hard.seconds;
+  return hard.seconds / (TOOL_TIER_SPEED[toolDef.toolTier]||1);
+}
+
+const RECIPES = [
+  { id:'stick', label:'Stick', resultId:'stick', resultCount:4, pattern:[['planks'],['planks']] },
+  { id:'crafting_table', label:'Crafting Table', resultId:'crafting_table', resultCount:1, pattern:[['planks','planks'],['planks','planks']] },
+  { id:'wooden_pickaxe', label:'Wooden Pickaxe', resultId:'wooden_pickaxe', resultCount:1, pattern:[['planks','planks','planks'],[null,'stick',null],[null,'stick',null]] },
+  { id:'wooden_axe', label:'Wooden Axe', resultId:'wooden_axe', resultCount:1, pattern:[['planks','planks'],['planks','stick'],[null,'stick']] },
+  { id:'wooden_sword', label:'Wooden Sword', resultId:'wooden_sword', resultCount:1, pattern:[['planks'],['planks'],['stick']] },
+  { id:'stone_pickaxe', label:'Stone Pickaxe', resultId:'stone_pickaxe', resultCount:1, pattern:[['cobblestone','cobblestone','cobblestone'],[null,'stick',null],[null,'stick',null]] },
+  { id:'stone_axe', label:'Stone Axe', resultId:'stone_axe', resultCount:1, pattern:[['cobblestone','cobblestone'],['cobblestone','stick'],[null,'stick']] },
+  { id:'stone_sword', label:'Stone Sword', resultId:'stone_sword', resultCount:1, pattern:[['cobblestone'],['cobblestone'],['stick']] },
+  { id:'iron_pickaxe', label:'Iron Pickaxe', resultId:'iron_pickaxe', resultCount:1, pattern:[['iron_block','iron_block','iron_block'],[null,'stick',null],[null,'stick',null]] },
+  { id:'iron_axe', label:'Iron Axe', resultId:'iron_axe', resultCount:1, pattern:[['iron_block','iron_block'],['iron_block','stick'],[null,'stick']] },
+  { id:'iron_sword', label:'Iron Sword', resultId:'iron_sword', resultCount:1, pattern:[['iron_block'],['iron_block'],['stick']] },
+  { id:'diamond_pickaxe', label:'Diamond Pickaxe', resultId:'diamond_pickaxe', resultCount:1, pattern:[['diamond_block','diamond_block','diamond_block'],[null,'stick',null],[null,'stick',null]] },
+  { id:'diamond_axe', label:'Diamond Axe', resultId:'diamond_axe', resultCount:1, pattern:[['diamond_block','diamond_block'],['diamond_block','stick'],[null,'stick']] },
+  { id:'diamond_sword', label:'Diamond Sword', resultId:'diamond_sword', resultCount:1, pattern:[['diamond_block'],['diamond_block'],['stick']] },
+  { id:'door', label:'Pale Oak Door', resultId:'door', resultCount:1, pattern:[['planks','planks'],['planks','planks'],['planks','planks']] },
+  { id:'bed_pink', label:'Pink Bed', resultId:'bed_pink', resultCount:1, pattern:[['wool_white','wool_white','wool_white'],['planks','planks','planks']] },
+  { id:'slab_oak', label:'Oak Slab', resultId:'slab_oak', resultCount:6, pattern:[['planks','planks','planks']] },
+];
+function trimGridPattern(grid, rows, cols){
+  let minR=rows, maxR=-1, minC=cols, maxC=-1;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    if(grid[r*cols+c]){ if(r<minR)minR=r; if(r>maxR)maxR=r; if(c<minC)minC=c; if(c>maxC)maxC=c; }
+  }
+  if(maxR<0) return null;
+  const outRows = maxR-minR+1, outCols = maxC-minC+1;
+  const cells = [];
+  for(let r=0;r<outRows;r++){
+    const row = [];
+    for(let c=0;c<outCols;c++) row.push(grid[(minR+r)*cols + (minC+c)] || null);
+    cells.push(row);
+  }
+  return {rows:outRows, cols:outCols, cells};
+}
+function findMatchingRecipe(grid, rows, cols){
+  const trimmed = trimGridPattern(grid, rows, cols);
+  if(!trimmed) return null;
+  for(const recipe of RECIPES){
+    const rp = recipe.pattern;
+    if(rp.length!==trimmed.rows || rp[0].length!==trimmed.cols) continue;
+    let ok = true;
+    for(let r=0;r<trimmed.rows && ok;r++){
+      for(let c=0;c<trimmed.cols;c++){
+        if((rp[r][c]||null) !== trimmed.cells[r][c]){ ok=false; break; }
+      }
+    }
+    if(ok) return recipe;
+  }
+  return null;
+}
 
 
 
@@ -2125,6 +2261,37 @@ const coralBubbleTexture = loadRealTexture('blocks/bubble_coral_block.png');
 const coralFireTexture = loadRealTexture('blocks/fire_coral_block.png');
 const coralHornTexture = loadRealTexture('blocks/horn_coral_block.png');
 const seagrassTexture = loadRealTextureFrame('blocks/seagrass.png', 0, 64);
+const craftingTableSideTexture = loadRealTexture('blocks/crafting_table_side.png');
+const craftingTableTopTexture = loadRealTexture('blocks/crafting_table_top.png');
+const craftingTableFrontTexture = loadRealTexture('blocks/crafting_table_front.png');
+const destroyStageTextures = [];
+for(let i=0;i<10;i++) destroyStageTextures.push(loadRealTexture('blocks/destroy_stage_'+i+'.png'));
+function loadIconImage(path){
+  const img = new Image();
+  img.src = 'assets/textures/'+path;
+  return img;
+}
+const TOOL_ICON_IMAGES = {
+  wooden_pickaxe: loadIconImage('items/wooden_pickaxe.png'),
+  stone_pickaxe: loadIconImage('items/stone_pickaxe.png'),
+  iron_pickaxe: loadIconImage('items/iron_pickaxe.png'),
+  diamond_pickaxe: loadIconImage('items/diamond_pickaxe.png'),
+  wooden_axe: loadIconImage('items/wooden_axe.png'),
+  stone_axe: loadIconImage('items/stone_axe.png'),
+  iron_axe: loadIconImage('items/iron_axe.png'),
+  diamond_axe: loadIconImage('items/diamond_axe.png'),
+  wooden_sword: loadIconImage('items/wooden_sword.png'),
+  stone_sword: loadIconImage('items/stone_sword.png'),
+  iron_sword: loadIconImage('items/iron_sword.png'),
+  diamond_sword: loadIconImage('items/diamond_sword.png'),
+  stick: loadIconImage('items/stick.png'),
+};
+function drawFlatIconImage(canvas, img){
+  const ctx = canvas.getContext('2d'); const s = canvas.width;
+  ctx.clearRect(0,0,s,s);
+  ctx.imageSmoothingEnabled = false;
+  if(img && img.complete && img.naturalWidth>0) ctx.drawImage(img, 0, 0, s, s);
+}
 
 
 function makeSpeckleTexture(base, light, dark, size=16, count=45){
@@ -2759,6 +2926,7 @@ function drawStairsIcon(canvas, color){
   steps.forEach(st=> ctx.strokeRect(s*st.x, s*st.y, s*st.w, s*(0.84-st.y)));
 }
 function drawItemIcon(canvas, def){
+  if(def.toolIcon){ drawFlatIconImage(canvas, TOOL_ICON_IMAGES[def.toolIcon]); return; }
   if(def.itemKey==='meat'){ drawMeatIcon(canvas); return; }
   if(def.itemKey==='fish'){ drawFishIcon(canvas); return; }
   if(def.itemKey==='plant'){ drawFlowerIcon(canvas); return; }
@@ -3597,6 +3765,13 @@ async function startGame(mapMeta, mode, adminOpts){
   materials[BLOCK.CORAL_FIRE] = new THREE.MeshLambertMaterial({map:coralFireTexture, color:0xffffff});
   materials[BLOCK.CORAL_HORN] = new THREE.MeshLambertMaterial({map:coralHornTexture, color:0xffffff});
   materials[BLOCK.SEAGRASS] = new THREE.MeshLambertMaterial({map:seagrassTexture, color:0x6fae5a, side:THREE.DoubleSide, transparent:false, alphaTest:0.5});
+  {
+    const ctSide = new THREE.MeshLambertMaterial({map:craftingTableSideTexture, color:0xffffff});
+    const ctTop = new THREE.MeshLambertMaterial({map:craftingTableTopTexture, color:0xffffff});
+    const ctBottom = new THREE.MeshLambertMaterial({map:planksTexture, color:0xffffff});
+    const ctFront = new THREE.MeshLambertMaterial({map:craftingTableFrontTexture, color:0xffffff});
+    materials[BLOCK.CRAFTING_TABLE] = [ctSide, ctSide, ctTop, ctBottom, ctFront, ctSide];
+  }
   const darkTrapdoorMat = new THREE.MeshLambertMaterial({map:darkOakTrapdoorTexture, color:0xffffff});
   materials[BLOCK.TRAPDOOR_BOTTOM] = darkTrapdoorMat; materials[BLOCK.TRAPDOOR_TOP] = darkTrapdoorMat;
   for(const id of TRAPDOOR_OPEN_IDS) materials[id] = darkTrapdoorMat;
@@ -5086,6 +5261,7 @@ async function startGame(mapMeta, mode, adminOpts){
     { name:'Mineral Blocks', ids:['iron_block','gold_block','diamond_block','emerald_block','redstone_block','coal_block'] },
     { name:'Wool', ids:['wool_white','wool_red','wool_blue'] },
     { name:'Ocean', ids:['coral_tube','coral_brain','coral_bubble','coral_fire','coral_horn','seagrass'] },
+    { name:'Tools', ids:['crafting_table','stick','wooden_pickaxe','wooden_axe','wooden_sword','stone_pickaxe','stone_axe','stone_sword','iron_pickaxe','iron_axe','iron_sword','diamond_pickaxe','diamond_axe','diamond_sword'] },
     { name:'Wood', ids:['wood','planks','spruce_wood','birch_wood','jungle_wood','dark_oak_wood','acacia_wood','mangrove_wood','leaves','leaves_flowering','stairs','stairs_spruce','slab','slab_oak','slab_spruce','trapdoor','door','fence','fence_spruce'] },
     { name:'Nature', ids:['grass','short_grass','tall_reed','tall_grass_plant','large_fern','vine','weeping_vines','cave_vines','spore_blossom','flower_pot','flower_pot_big'] },
     { name:'Flowers', ids:['plant','poppy','dandelion','cornflower','allium','lily_of_the_valley','azure_bluet','blue_orchid','oxeye_daisy','red_tulip','orange_tulip','white_tulip','pink_tulip','wither_rose','lemon_tulip','green_fern','violet_orchid'] },
@@ -5204,6 +5380,7 @@ async function startGame(mapMeta, mode, adminOpts){
     toast('Placed a chest');
   }
   let openChest = null;
+  let craftingOpen = false;
   function findNearbyChest(){
     const dir = new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(player.pitch, player.yaw, 0, 'YXZ'));
     const eye = eyePos();
@@ -5508,6 +5685,7 @@ async function startGame(mapMeta, mode, adminOpts){
     return null;
   }
   function placeBed(def){
+    if(gameMode!=='creative' && (player.inventory[def.itemKey]||0)<=0){ toast('Out of '+def.label); return; }
     const res = castVoxel();
     if(!res || !res.before) return;
     const {x,y,z} = res.before;
@@ -5521,6 +5699,7 @@ async function startGame(mapMeta, mode, adminOpts){
     const id = genId();
     const color = (def && def.bedColor) || 'pink';
     spawnBedObject(id, worldX, worldY, worldZ, rotY, color);
+    if(gameMode!=='creative'){ player.inventory[def.itemKey]--; renderHotbar(); }
     scheduleSaveBeds();
     broadcastWorldEvent('bed_place', {id, x:worldX, y:worldY, z:worldZ, rotY, color});
     toast('Placed a bed');
@@ -7375,7 +7554,7 @@ async function startGame(mapMeta, mode, adminOpts){
     
     
     
-    return { [BLOCK.DIRT]:0,[BLOCK.STONE]:0,[BLOCK.GRASS]:0,[BLOCK.SAND]:0,[BLOCK.WOOD]:0,[BLOCK.LEAVES]:0,[BLOCK.PLANKS]:0,[BLOCK.LAMP]:0,[BLOCK.GLASS]:0,[BLOCK.BRICK]:0,[BLOCK.MOSSY_STONE]:0,[BLOCK.SNOW]:0,[BLOCK.FENCE]:0,[BLOCK.SLAB_BOTTOM]:0,[BLOCK.SLAB_TOP]:0,[BLOCK.SLAB_OAK_BOTTOM]:0,[BLOCK.SLAB_OAK_TOP]:0,[BLOCK.TRAPDOOR_BOTTOM]:0,[BLOCK.TRAPDOOR_TOP]:0,[BLOCK.FLOWER_POT]:0,[BLOCK.FLOWER_POT_BIG]:0,[BLOCK.MOSSY_PAVE]:0,[BLOCK.MOSSY_STONE_TURF]:0,[BLOCK.WOOD_SPRUCE]:0,[BLOCK.WOOD_BIRCH]:0,[BLOCK.WOOD_JUNGLE]:0,[BLOCK.WOOD_DARK_OAK]:0,[BLOCK.WOOD_ACACIA]:0,[BLOCK.WOOD_MANGROVE]:0,[BLOCK.LEAVES_FLOWERING]:0,[BLOCK.LEAVES_SPRUCE]:0,[BLOCK.LEAVES_BIRCH]:0,[BLOCK.LEAVES_JUNGLE]:0,[BLOCK.LEAVES_DARK_OAK]:0,[BLOCK.LEAVES_ACACIA]:0,[BLOCK.LEAVES_MANGROVE]:0,[BLOCK.SHORT_GRASS]:0,[BLOCK.FENCE_SPRUCE]:0,[BLOCK.COBBLESTONE]:0,[BLOCK.OBSIDIAN]:0,[BLOCK.IRON_BLOCK]:0,[BLOCK.GOLD_BLOCK]:0,[BLOCK.DIAMOND_BLOCK]:0,[BLOCK.EMERALD_BLOCK]:0,[BLOCK.REDSTONE_BLOCK]:0,[BLOCK.COAL_BLOCK]:0,[BLOCK.NETHERRACK]:0,[BLOCK.CLAY_BLOCK]:0,[BLOCK.SLAB_SPRUCE_BOTTOM]:0,[BLOCK.SLAB_SPRUCE_TOP]:0,[BLOCK.GRAVEL]:0,[BLOCK.ANDESITE]:0,[BLOCK.DIORITE]:0,[BLOCK.GRANITE]:0,[BLOCK.SANDSTONE]:0,[BLOCK.BOOKSHELF]:0,[BLOCK.NETHER_BRICKS]:0,[BLOCK.QUARTZ_BLOCK]:0,[BLOCK.SEA_LANTERN]:0,[BLOCK.HAY_BALE]:0,[BLOCK.ICE]:0,[BLOCK.WOOL_WHITE]:0,[BLOCK.WOOL_RED]:0,[BLOCK.WOOL_BLUE]:0,[BLOCK.CORAL_TUBE]:0,[BLOCK.CORAL_BRAIN]:0,[BLOCK.CORAL_BUBBLE]:0,[BLOCK.CORAL_FIRE]:0,[BLOCK.CORAL_HORN]:0,[BLOCK.SEAGRASS]:0, meat:0, plant:0, fish:0, coconut:0, seed:0, snowbag:0, letter:0, picture_of_us:0, lantern:0, zoot:0, stairs:0, stairs_spruce:0, door:0,
+    return { [BLOCK.DIRT]:0,[BLOCK.STONE]:0,[BLOCK.GRASS]:0,[BLOCK.SAND]:0,[BLOCK.WOOD]:0,[BLOCK.LEAVES]:0,[BLOCK.PLANKS]:0,[BLOCK.LAMP]:0,[BLOCK.GLASS]:0,[BLOCK.BRICK]:0,[BLOCK.MOSSY_STONE]:0,[BLOCK.SNOW]:0,[BLOCK.FENCE]:0,[BLOCK.SLAB_BOTTOM]:0,[BLOCK.SLAB_TOP]:0,[BLOCK.SLAB_OAK_BOTTOM]:0,[BLOCK.SLAB_OAK_TOP]:0,[BLOCK.TRAPDOOR_BOTTOM]:0,[BLOCK.TRAPDOOR_TOP]:0,[BLOCK.FLOWER_POT]:0,[BLOCK.FLOWER_POT_BIG]:0,[BLOCK.MOSSY_PAVE]:0,[BLOCK.MOSSY_STONE_TURF]:0,[BLOCK.WOOD_SPRUCE]:0,[BLOCK.WOOD_BIRCH]:0,[BLOCK.WOOD_JUNGLE]:0,[BLOCK.WOOD_DARK_OAK]:0,[BLOCK.WOOD_ACACIA]:0,[BLOCK.WOOD_MANGROVE]:0,[BLOCK.LEAVES_FLOWERING]:0,[BLOCK.LEAVES_SPRUCE]:0,[BLOCK.LEAVES_BIRCH]:0,[BLOCK.LEAVES_JUNGLE]:0,[BLOCK.LEAVES_DARK_OAK]:0,[BLOCK.LEAVES_ACACIA]:0,[BLOCK.LEAVES_MANGROVE]:0,[BLOCK.SHORT_GRASS]:0,[BLOCK.FENCE_SPRUCE]:0,[BLOCK.COBBLESTONE]:0,[BLOCK.OBSIDIAN]:0,[BLOCK.IRON_BLOCK]:0,[BLOCK.GOLD_BLOCK]:0,[BLOCK.DIAMOND_BLOCK]:0,[BLOCK.EMERALD_BLOCK]:0,[BLOCK.REDSTONE_BLOCK]:0,[BLOCK.COAL_BLOCK]:0,[BLOCK.NETHERRACK]:0,[BLOCK.CLAY_BLOCK]:0,[BLOCK.SLAB_SPRUCE_BOTTOM]:0,[BLOCK.SLAB_SPRUCE_TOP]:0,[BLOCK.GRAVEL]:0,[BLOCK.ANDESITE]:0,[BLOCK.DIORITE]:0,[BLOCK.GRANITE]:0,[BLOCK.SANDSTONE]:0,[BLOCK.BOOKSHELF]:0,[BLOCK.NETHER_BRICKS]:0,[BLOCK.QUARTZ_BLOCK]:0,[BLOCK.SEA_LANTERN]:0,[BLOCK.HAY_BALE]:0,[BLOCK.ICE]:0,[BLOCK.WOOL_WHITE]:0,[BLOCK.WOOL_RED]:0,[BLOCK.WOOL_BLUE]:0,[BLOCK.CORAL_TUBE]:0,[BLOCK.CORAL_BRAIN]:0,[BLOCK.CORAL_BUBBLE]:0,[BLOCK.CORAL_FIRE]:0,[BLOCK.CORAL_HORN]:0,[BLOCK.SEAGRASS]:0,[BLOCK.CRAFTING_TABLE]:0, stick:0, wooden_pickaxe:0, wooden_axe:0, wooden_sword:0, stone_pickaxe:0, stone_axe:0, stone_sword:0, iron_pickaxe:0, iron_axe:0, iron_sword:0, diamond_pickaxe:0, diamond_axe:0, diamond_sword:0, meat:0, plant:0, fish:0, coconut:0, seed:0, snowbag:0, letter:0, picture_of_us:0, lantern:0, zoot:0, stairs:0, stairs_spruce:0, door:0,
       poppy:0, dandelion:0, cornflower:0, allium:0, lily_of_the_valley:0, azure_bluet:0, blue_orchid:0, oxeye_daisy:0, red_tulip:0, orange_tulip:0, white_tulip:0, pink_tulip:0, wither_rose:0, lemon_tulip:0, green_fern:0, violet_orchid:0, ...Object.fromEntries(VINYL_TRACKS.map(v=>[v.id,0])) };
   }
   
@@ -7525,6 +7704,20 @@ async function startGame(mapMeta, mode, adminOpts){
     {id:'coral_fire', blockType:BLOCK.CORAL_FIRE, label:'Fire Coral Block', color:'#c9302f'},
     {id:'coral_horn', blockType:BLOCK.CORAL_HORN, label:'Horn Coral Block', color:'#e0c23c'},
     {id:'seagrass', blockType:BLOCK.SEAGRASS, label:'Seagrass', color:'#3a7a4a'},
+    {id:'crafting_table', blockType:BLOCK.CRAFTING_TABLE, label:'Crafting Table', color:'#8a6a3f'},
+    {id:'stick', itemKey:'stick', label:'Stick', color:'#a9835a', toolIcon:'stick'},
+    {id:'wooden_pickaxe', itemKey:'wooden_pickaxe', label:'Wooden Pickaxe', color:'#a9835a', toolIcon:'wooden_pickaxe', toolType:'pickaxe', toolTier:'wood'},
+    {id:'wooden_axe', itemKey:'wooden_axe', label:'Wooden Axe', color:'#a9835a', toolIcon:'wooden_axe', toolType:'axe', toolTier:'wood'},
+    {id:'wooden_sword', itemKey:'wooden_sword', label:'Wooden Sword', color:'#a9835a', toolIcon:'wooden_sword', toolType:'sword', toolTier:'wood'},
+    {id:'stone_pickaxe', itemKey:'stone_pickaxe', label:'Stone Pickaxe', color:'#8a8a86', toolIcon:'stone_pickaxe', toolType:'pickaxe', toolTier:'stone'},
+    {id:'stone_axe', itemKey:'stone_axe', label:'Stone Axe', color:'#8a8a86', toolIcon:'stone_axe', toolType:'axe', toolTier:'stone'},
+    {id:'stone_sword', itemKey:'stone_sword', label:'Stone Sword', color:'#8a8a86', toolIcon:'stone_sword', toolType:'sword', toolTier:'stone'},
+    {id:'iron_pickaxe', itemKey:'iron_pickaxe', label:'Iron Pickaxe', color:'#d8d8d0', toolIcon:'iron_pickaxe', toolType:'pickaxe', toolTier:'iron'},
+    {id:'iron_axe', itemKey:'iron_axe', label:'Iron Axe', color:'#d8d8d0', toolIcon:'iron_axe', toolType:'axe', toolTier:'iron'},
+    {id:'iron_sword', itemKey:'iron_sword', label:'Iron Sword', color:'#d8d8d0', toolIcon:'iron_sword', toolType:'sword', toolTier:'iron'},
+    {id:'diamond_pickaxe', itemKey:'diamond_pickaxe', label:'Diamond Pickaxe', color:'#6de0e0', toolIcon:'diamond_pickaxe', toolType:'pickaxe', toolTier:'diamond'},
+    {id:'diamond_axe', itemKey:'diamond_axe', label:'Diamond Axe', color:'#6de0e0', toolIcon:'diamond_axe', toolType:'axe', toolTier:'diamond'},
+    {id:'diamond_sword', itemKey:'diamond_sword', label:'Diamond Sword', color:'#6de0e0', toolIcon:'diamond_sword', toolType:'sword', toolTier:'diamond'},
     {id:'trapdoor',blockType:BLOCK.TRAPDOOR_BOTTOM, label:'Dark Oak Trapdoor', color:'#3a2415'},
     
     
@@ -7561,8 +7754,8 @@ async function startGame(mapMeta, mode, adminOpts){
     {id:'snowbag', itemKey:'snowbag', label:'Snow', color:'#eef6fb', gain:0},
     {id:'turntable', special:'turntable', label:'Record Player', color:'#2a2a2a'},
     {id:'chest', special:'chest', label:'Chest', color:'#7a5738'},
-    {id:'bed_pink', special:'bed', bedColor:'pink', label:'Pink Bed', color:'#e8639f'},
-    {id:'bed_brown', special:'bed', bedColor:'brown', label:'Brown Bed', color:'#8a5a3a'},
+    {id:'bed_pink', special:'bed', itemKey:'bed_pink', bedColor:'pink', label:'Pink Bed', color:'#e8639f'},
+    {id:'bed_brown', special:'bed', itemKey:'bed_brown', bedColor:'brown', label:'Brown Bed', color:'#8a5a3a'},
     {id:'sign', special:'sign', label:'Sign', color:'#c9a06b'},
     {id:'vine', special:'vine', label:'Vine', color:'#3f7a2e'},
     {id:'weeping_vines', special:'weeping_vines', label:'Weeping Vines', color:'#6a1f10'},
@@ -7636,6 +7829,7 @@ async function startGame(mapMeta, mode, adminOpts){
     invOpen = (force!==undefined) ? force : !invOpen;
     document.getElementById('inv-overlay').classList.toggle('hidden', !invOpen);
     if(invOpen){ document.exitPointerLock(); renderInventory(); }
+    else { returnCraftGridToInventory(personalCraftGrid); craftPickedItemId = null; renderHotbar(); }
   }
   document.getElementById('close-inv-btn').onclick = ()=> toggleInventory(false);
 
@@ -7711,6 +7905,7 @@ async function startGame(mapMeta, mode, adminOpts){
       
       
       if(openChest) closeChestUI();
+      else if(craftingOpen) closeCraftingUI();
       else if(letterOpen) hideLetter();
       else if(pictureOpen) hidePicture();
       else if(invOpen) toggleInventory(false);
@@ -7728,14 +7923,17 @@ async function startGame(mapMeta, mode, adminOpts){
   
   
   
-  window.addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; });
+  window.addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; mouseDownLeft=false; cancelMining(); });
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) for(const k in keys) keys[k]=false; });
 
   const raycaster = new THREE.Raycaster();
   canvas.addEventListener('mousedown', e=>{
     if(!pointerLocked || adminPovTargetId) return;
-    if(e.button===0) doBreak();
+    if(e.button===0){ mouseDownLeft = true; doBreak(); }
     if(e.button===2) doPlace();
+  });
+  window.addEventListener('mouseup', e=>{
+    if(e.button===0){ mouseDownLeft = false; cancelMining(); }
   });
   canvas.addEventListener('contextmenu', e=> e.preventDefault());
   
@@ -7946,6 +8144,203 @@ async function startGame(mapMeta, mode, adminOpts){
     el.textContent = 'pipilini';
     el.style.display = 'block';
   }
+
+  function giveItem(itemId, count){
+    const def = getItemById(itemId);
+    if(!def) return;
+    if(def.blockType!==undefined) player.inventory[def.blockType] = (player.inventory[def.blockType]||0)+count;
+    else player.inventory[def.itemKey] = (player.inventory[def.itemKey]||0)+count;
+    ensureInInventory(itemId);
+  }
+  function craftInvCount(id){
+    const def = getItemById(id);
+    if(!def) return 0;
+    if(gameMode==='creative') return Infinity;
+    return def.blockType!==undefined ? (player.inventory[def.blockType]||0) : (player.inventory[def.itemKey]||0);
+  }
+  function returnCraftGridToInventory(grid){
+    for(let i=0;i<grid.length;i++){
+      if(grid[i]){
+        if(gameMode!=='creative') giveItem(grid[i], 1);
+        grid[i] = null;
+      }
+    }
+  }
+  let craftPickedItemId = null;
+  let craftSelectedRecipeId = null;
+  const personalCraftGrid = [null,null,null,null];
+  const tableCraftGrid = new Array(9).fill(null);
+
+  function craftCellClick(gridArr, idx, rerender){
+    const cur = gridArr[idx];
+    if(cur){
+      if(gameMode!=='creative') giveItem(cur, 1);
+      gridArr[idx] = null;
+      rerender();
+      renderHotbar();
+      return;
+    }
+    if(craftPickedItemId){
+      if(gameMode!=='creative'){
+        if(craftInvCount(craftPickedItemId)<=0){ toast('None left'); return; }
+        const def = getItemById(craftPickedItemId);
+        if(def.blockType!==undefined) player.inventory[def.blockType]--; else player.inventory[def.itemKey]--;
+      }
+      gridArr[idx] = craftPickedItemId;
+      rerender();
+      renderHotbar();
+    }
+  }
+  function makeCraftGridCell(gridArr, idx, rerender){
+    const cell = document.createElement('div');
+    cell.className = 'hb-slot';
+    const id = gridArr[idx];
+    if(id){
+      const def = getItemById(id);
+      if(def) cell.appendChild(makeItemIconEl(def, 30));
+    } else {
+      const ph = document.createElement('div'); ph.className='hb-empty'; ph.textContent='+';
+      cell.appendChild(ph);
+    }
+    cell.onclick = ()=> craftCellClick(gridArr, idx, rerender);
+    return cell;
+  }
+  function makeCraftInvSlotCell(type, index, rerender){
+    const id = slotArray(type)[index];
+    const def = getItemById(id);
+    const cell = document.createElement('div');
+    cell.className = 'hb-slot' + (def && craftPickedItemId===id ? ' craft-picked' : '');
+    if(def){
+      cell.appendChild(makeItemIconEl(def, 30));
+      if(!def.isLetterInstance){
+        const c = document.createElement('div'); c.className='count'; c.textContent = (gameMode==='creative') ? '∞' : (craftInvCount(id)||0);
+        cell.appendChild(c);
+      }
+      cell.title = def.label;
+      cell.onclick = ()=>{
+        if(def.special || def.isLetterInstance) return;
+        craftPickedItemId = (craftPickedItemId===id) ? null : id;
+        rerender();
+      };
+    } else {
+      const ph = document.createElement('div'); ph.className='hb-empty'; ph.textContent='+';
+      cell.appendChild(ph);
+    }
+    return cell;
+  }
+  function renderCraftOutput(gridArr, rows, cols, outputId, rerender){
+    const outEl = document.getElementById(outputId);
+    outEl.innerHTML = '';
+    const recipe = findMatchingRecipe(gridArr, rows, cols);
+    const cell = document.createElement('div');
+    cell.className = 'hb-slot craft-output' + (recipe ? ' ready' : '');
+    if(recipe){
+      const def = getItemById(recipe.resultId);
+      if(def) cell.appendChild(makeItemIconEl(def, 30));
+      const c = document.createElement('div'); c.className='count'; c.textContent = 'x'+recipe.resultCount;
+      cell.appendChild(c);
+      cell.onclick = ()=>{
+        for(let i=0;i<gridArr.length;i++) gridArr[i] = null;
+        giveItem(recipe.resultId, recipe.resultCount);
+        rerender();
+        renderHotbar();
+        toast('Crafted '+(def?def.label:recipe.label));
+      };
+    } else {
+      const ph = document.createElement('div'); ph.className='hb-empty';
+      cell.appendChild(ph);
+    }
+    outEl.appendChild(cell);
+  }
+  function renderPersonalCraftUI(){
+    const gridEl = document.getElementById('personal-craft-grid');
+    gridEl.innerHTML = '';
+    for(let i=0;i<4;i++) gridEl.appendChild(makeCraftGridCell(personalCraftGrid, i, renderPersonalCraftUI));
+    renderCraftOutput(personalCraftGrid, 2, 2, 'personal-craft-output', renderPersonalCraftUI);
+  }
+  function renderCraftPatternHint(){
+    const hintEl = document.getElementById('craft-pattern-hint');
+    hintEl.innerHTML = '';
+    if(!craftSelectedRecipeId) return;
+    const recipe = RECIPES.find(r=>r.id===craftSelectedRecipeId);
+    if(!recipe) return;
+    const rows = recipe.pattern.length, cols = recipe.pattern[0].length;
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat('+cols+', 40px)';
+    grid.style.gap = '4px';
+    grid.style.marginBottom = '10px';
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const id = recipe.pattern[r][c];
+        const cell = document.createElement('div');
+        cell.className = 'hb-slot';
+        cell.style.width = '40px'; cell.style.height = '40px';
+        if(id){
+          const def = getItemById(id);
+          if(def) cell.appendChild(makeItemIconEl(def, 24));
+        }
+        grid.appendChild(cell);
+      }
+    }
+    hintEl.appendChild(grid);
+    const label = document.createElement('p');
+    label.className = 'shared-note';
+    label.textContent = 'Needed for: '+recipe.label;
+    hintEl.appendChild(label);
+  }
+  function renderRecipeCatalog(){
+    const listEl = document.getElementById('craft-recipe-list');
+    const query = (document.getElementById('craft-search').value||'').toLowerCase().trim();
+    listEl.innerHTML = '';
+    RECIPES.filter(r=> !query || r.label.toLowerCase().includes(query)).forEach(r=>{
+      const entry = document.createElement('div');
+      entry.className = 'recipe-entry' + (craftSelectedRecipeId===r.id ? ' active' : '');
+      const def = getItemById(r.resultId);
+      if(def) entry.appendChild(makeItemIconEl(def, 26));
+      const label = document.createElement('div');
+      label.textContent = r.label+' x'+r.resultCount;
+      entry.appendChild(label);
+      entry.onclick = ()=>{
+        craftSelectedRecipeId = (craftSelectedRecipeId===r.id) ? null : r.id;
+        renderCraftTableUI();
+      };
+      listEl.appendChild(entry);
+    });
+    if(!listEl.children.length) listEl.innerHTML = '<p class="shared-note">No matches</p>';
+  }
+  function renderCraftTableUI(){
+    const gridEl = document.getElementById('table-craft-grid');
+    gridEl.innerHTML = '';
+    for(let i=0;i<9;i++) gridEl.appendChild(makeCraftGridCell(tableCraftGrid, i, renderCraftTableUI));
+    renderCraftOutput(tableCraftGrid, 3, 3, 'table-craft-output', renderCraftTableUI);
+    const hbRow = document.getElementById('craft-hotbar-row');
+    hbRow.innerHTML = '';
+    for(let i=0;i<HOTBAR_SIZE;i++) hbRow.appendChild(makeCraftInvSlotCell('hotbar', i, renderCraftTableUI));
+    const invGrid = document.getElementById('craft-player-items');
+    invGrid.innerHTML = '';
+    for(let i=0;i<INV_SIZE;i++) invGrid.appendChild(makeCraftInvSlotCell('inv', i, renderCraftTableUI));
+    renderRecipeCatalog();
+    renderCraftPatternHint();
+  }
+  function openCraftingUI(){
+    craftingOpen = true;
+    craftPickedItemId = null;
+    craftSelectedRecipeId = null;
+    document.exitPointerLock();
+    document.getElementById('craft-table-overlay').classList.remove('hidden');
+    document.getElementById('craft-search').value = '';
+    renderCraftTableUI();
+  }
+  function closeCraftingUI(){
+    returnCraftGridToInventory(tableCraftGrid);
+    craftingOpen = false;
+    craftPickedItemId = null;
+    document.getElementById('craft-table-overlay').classList.add('hidden');
+    renderHotbar();
+  }
+  document.getElementById('close-craft-btn').onclick = closeCraftingUI;
+  document.getElementById('craft-search').addEventListener('input', renderRecipeCatalog);
 
   function doBreak(){
     
@@ -8212,15 +8607,21 @@ async function startGame(mapMeta, mode, adminOpts){
     const {x,y,z} = res.hit;
     const b = getBlock(x,y,z);
     if(!b || b===BLOCK.WATER) return;
+    if(gameMode==='creative'){
+      finishBreakBlock(x,y,z,b);
+    }
+  }
+
+  function finishBreakBlock(x,y,z,b){
     if(b===BLOCK.LAMP) removeLampLight(x,y,z);
-    
-    
+
+
     if(isFlowerPotBlock(b) && removePottedFlowerAt(x,y,z) && gameMode!=='creative'){
       player.inventory.plant = (player.inventory.plant||0)+1;
     }
-    
-    
-    
+
+
+
     if(isDoorBlock(b)){
       let bottomY, topY;
       if(DOOR_BOTTOM_IDS.indexOf(b)>=0 || DOOR_OPEN_BOTTOM_IDS.indexOf(b)>=0){ bottomY=y; topY=y+1; }
@@ -8238,12 +8639,6 @@ async function startGame(mapMeta, mode, adminOpts){
     setBlock(x,y,z,BLOCK.AIR);
     spawnBlockBreakParticles(x,y,z,b);
     broadcastWorldEvent('block_change', {x,y,z,val:BLOCK.AIR});
-    
-    
-    
-    
-    
-    
     if(isAnyStairsBlock(b)) player.inventory.stairs = (player.inventory.stairs||0)+1;
     else if(isAnySpruceStairsBlock(b)) player.inventory.stairs_spruce = (player.inventory.stairs_spruce||0)+1;
     else if(TRAPDOOR_OPEN_IDS.indexOf(b)>=0) player.inventory[BLOCK.TRAPDOOR_BOTTOM] = (player.inventory[BLOCK.TRAPDOOR_BOTTOM]||0)+1;
@@ -8253,6 +8648,48 @@ async function startGame(mapMeta, mode, adminOpts){
     else if(player.inventory[b]!==undefined) player.inventory[b]++;
     reloadChunksNear(x,z);
     renderHotbar();
+  }
+
+  let mouseDownLeft = false;
+  let miningTarget = null;
+  let miningProgress = 0;
+  const crackOverlayGeo = new THREE.BoxGeometry(1.012,1.012,1.012);
+  const crackOverlayMats = destroyStageTextures.map(tex => new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false}));
+  const crackOverlayMesh = new THREE.Mesh(crackOverlayGeo, crackOverlayMats[0]);
+  crackOverlayMesh.visible = false;
+  crackOverlayMesh.renderOrder = 10;
+  scene.add(crackOverlayMesh);
+  function cancelMining(){
+    miningTarget = null;
+    miningProgress = 0;
+    crackOverlayMesh.visible = false;
+  }
+  function updateMining(dt){
+    if(!mouseDownLeft || !pointerLocked || adminPovTargetId || invOpen || openChest || craftingOpen || gameMode==='creative'){
+      if(miningTarget) cancelMining();
+      return;
+    }
+    const res = castVoxel();
+    if(!res || !res.hit){ cancelMining(); return; }
+    const {x,y,z} = res.hit;
+    const b = getBlock(x,y,z);
+    if(!b || b===BLOCK.WATER){ cancelMining(); return; }
+    if(!miningTarget || miningTarget.x!==x || miningTarget.y!==y || miningTarget.z!==z){
+      miningTarget = {x,y,z,b};
+      miningProgress = 0;
+    }
+    miningProgress += dt;
+    const heldDef = getItemById(hotbarSlots[player.selectedSlot]);
+    const required = miningSecondsFor(b, heldDef);
+    if(miningProgress >= required){
+      finishBreakBlock(x,y,z,b);
+      cancelMining();
+      return;
+    }
+    const stage = Math.min(9, Math.floor((miningProgress/required)*10));
+    crackOverlayMesh.position.set(x+0.5, y+0.5, z+0.5);
+    crackOverlayMesh.material = crackOverlayMats[stage];
+    crackOverlayMesh.visible = true;
   }
 
   function doPlace(){
@@ -8275,6 +8712,12 @@ async function startGame(mapMeta, mode, adminOpts){
     
     const targetedDoor = findTargetedDoor();
     if(targetedDoor){ toggleDoorAt(targetedDoor.x, targetedDoor.y, targetedDoor.z); return; }
+
+    const craftRes = castVoxel();
+    if(craftRes && craftRes.hit && getBlock(craftRes.hit.x, craftRes.hit.y, craftRes.hit.z)===BLOCK.CRAFTING_TABLE){
+      openCraftingUI();
+      return;
+    }
 
     const def = getItemById(hotbarSlots[player.selectedSlot]);
     if(!def) { toast('Empty slot'); return; }
@@ -9142,11 +9585,13 @@ async function startGame(mapMeta, mode, adminOpts){
     
     const isCreative = gameMode==='creative';
     document.getElementById('inv-creative-col').classList.toggle('hidden', !isCreative);
+    document.getElementById('inv-craft-col').classList.toggle('hidden', isCreative);
     document.getElementById('inv-panel').classList.toggle('wide', isCreative);
     document.getElementById('inv-note').textContent = isCreative
       ? 'Drag a block from the catalog into your backpack (or click for a quick add), or between your backpack and the hotbar.'
-      : 'Drag between your backpack and the hotbar to equip or rearrange.';
+      : 'Drag between your backpack and the hotbar to equip or rearrange. Click a material then a crafting square to place it.';
     if(isCreative) renderCreativeCatalog();
+    else renderPersonalCraftUI();
   }
   renderHearts(); renderHotbar();
 
@@ -10663,6 +11108,7 @@ async function startGame(mapMeta, mode, adminOpts){
     updateWeather(dt);
     updateWeatherParticles(dt);
     updateSnowOverlay(dt);
+    updateMining(dt);
     updateCanvasFilter();
     updateOtherPlayersAnimation(dt);
     updateOtherPlayersSmoke(dt);
