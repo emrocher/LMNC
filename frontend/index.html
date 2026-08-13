@@ -9614,22 +9614,6 @@ async function startGame(mapMeta, mode, adminOpts){
       
       
       
-    } else if(gameMode==='creative' && player.flying){
-      let vertical = 0;
-      if(keys['Space']) vertical += 1;
-      
-      
-      
-      
-      
-      
-      if(keys['KeyC']) vertical -= 1;
-      let tryFlyY = player.y + vertical*speed*dt;
-      tryFlyY = Math.max(0.6, Math.min(MAX_Y+10, tryFlyY));
-      if(!collidesBlocksAt(player.x, tryFlyY, player.z)){
-        player.y = tryFlyY;
-      }
-      player.vy = 0; player.onGround = false;
     } else if(inWater){
       if(keys['Space']){
         player.vy = Math.min(player.vy + 16*dt, 3.0);
@@ -9643,6 +9627,22 @@ async function startGame(mapMeta, mode, adminOpts){
         player.y = Math.max(0.6, tryY);
       }
       player.onGround = false;
+    } else if(gameMode==='creative' && player.flying){
+      let vertical = 0;
+      if(keys['Space']) vertical += 1;
+
+
+
+
+
+
+      if(keys['KeyC']) vertical -= 1;
+      let tryFlyY = player.y + vertical*speed*dt;
+      tryFlyY = Math.max(0.6, Math.min(MAX_Y+10, tryFlyY));
+      if(!collidesBlocksAt(player.x, tryFlyY, player.z)){
+        player.y = tryFlyY;
+      }
+      player.vy = 0; player.onGround = false;
     } else {
       if(!player.onGround) player.vy -= 14*dt;
       if(keys['Space'] && player.onGround){ player.vy = 5.4; player.onGround=false; }
