@@ -7806,6 +7806,10 @@ async function startGame(mapMeta, mode, adminOpts){
     return ALL_ITEMS.find(d=>d.id===id) || null;
   }
   function invCount(def){ if(!def) return 0; if(def.special || gameMode==='creative') return Infinity; return def.blockType!==undefined ? (player.inventory[def.blockType]||0) : (player.inventory[def.itemKey]||0); }
+  function itemIdForBlockType(bt){
+    const found = ALL_ITEMS.find(d=>d.blockType===bt);
+    return found ? found.id : null;
+  }
 
   
   const keys = {};
@@ -8187,6 +8191,7 @@ async function startGame(mapMeta, mode, adminOpts){
         if(def.blockType!==undefined) player.inventory[def.blockType]--; else player.inventory[def.itemKey]--;
       }
       gridArr[idx] = craftPickedItemId;
+      craftPickedItemId = null;
       rerender();
       renderHotbar();
     }
@@ -8362,6 +8367,7 @@ async function startGame(mapMeta, mode, adminOpts){
           const label = {cow:'Cow', pig:'Pig', duck:'Duck', panda:'Panda'}[a.kind] || 'Animal';
           const gain = 2;
           player.inventory.meat += gain;
+          ensureInInventory('meat');
           renderHotbar();
           toast(label+' killed: +'+gain+' meat');
           return;
@@ -8379,6 +8385,7 @@ async function startGame(mapMeta, mode, adminOpts){
           f.alive = false;
           scene.remove(f.group);
           player.inventory.fish += 1;
+          ensureInInventory('fish');
           renderHotbar();
           toast('Fish caught: +1');
           return;
@@ -8394,6 +8401,7 @@ async function startGame(mapMeta, mode, adminOpts){
         if(dirTo.angleTo(dir) < 0.3){
           p.alive=false; scene.remove(p.mesh);
           player.inventory.plant += 1;
+          ensureInInventory('plant');
           
           
           
@@ -8497,7 +8505,7 @@ async function startGame(mapMeta, mode, adminOpts){
           lanterns.splice(i,1);
           scheduleSaveLanterns();
           broadcastWorldEvent('lantern_remove', {id: l.id});
-          if(gameMode!=='creative'){ player.inventory.lantern = (player.inventory.lantern||0)+1; renderHotbar(); }
+          if(gameMode!=='creative'){ player.inventory.lantern = (player.inventory.lantern||0)+1; ensureInInventory('lantern'); renderHotbar(); }
           toast('Picked up the lantern');
           return;
         }
@@ -8584,7 +8592,7 @@ async function startGame(mapMeta, mode, adminOpts){
         const ang = toP.normalize().angleTo(dir);
         if(ang < 0.3){
           removePottedFlowerAt(p.x, p.y, p.z);
-          if(gameMode!=='creative'){ player.inventory.plant = (player.inventory.plant||0)+1; renderHotbar(); }
+          if(gameMode!=='creative'){ player.inventory.plant = (player.inventory.plant||0)+1; ensureInInventory('plant'); renderHotbar(); }
           toast('Picked the flower');
           return;
         }
@@ -8618,6 +8626,7 @@ async function startGame(mapMeta, mode, adminOpts){
 
     if(isFlowerPotBlock(b) && removePottedFlowerAt(x,y,z) && gameMode!=='creative'){
       player.inventory.plant = (player.inventory.plant||0)+1;
+      ensureInInventory('plant');
     }
 
 
@@ -8632,6 +8641,7 @@ async function startGame(mapMeta, mode, adminOpts){
       broadcastWorldEvent('block_change', {x,y:bottomY,z,val:BLOCK.AIR});
       broadcastWorldEvent('block_change', {x,y:topY,z,val:BLOCK.AIR});
       player.inventory.door = (player.inventory.door||0)+1;
+      ensureInInventory('door');
       reloadChunksNear(x,z);
       renderHotbar();
       return;
@@ -8639,13 +8649,13 @@ async function startGame(mapMeta, mode, adminOpts){
     setBlock(x,y,z,BLOCK.AIR);
     spawnBlockBreakParticles(x,y,z,b);
     broadcastWorldEvent('block_change', {x,y,z,val:BLOCK.AIR});
-    if(isAnyStairsBlock(b)) player.inventory.stairs = (player.inventory.stairs||0)+1;
-    else if(isAnySpruceStairsBlock(b)) player.inventory.stairs_spruce = (player.inventory.stairs_spruce||0)+1;
-    else if(TRAPDOOR_OPEN_IDS.indexOf(b)>=0) player.inventory[BLOCK.TRAPDOOR_BOTTOM] = (player.inventory[BLOCK.TRAPDOOR_BOTTOM]||0)+1;
-    else if(b===BLOCK.SLAB_TOP) player.inventory[BLOCK.SLAB_BOTTOM] = (player.inventory[BLOCK.SLAB_BOTTOM]||0)+1;
-    else if(b===BLOCK.SLAB_OAK_TOP) player.inventory[BLOCK.SLAB_OAK_BOTTOM] = (player.inventory[BLOCK.SLAB_OAK_BOTTOM]||0)+1;
-    else if(b===BLOCK.SLAB_SPRUCE_TOP) player.inventory[BLOCK.SLAB_SPRUCE_BOTTOM] = (player.inventory[BLOCK.SLAB_SPRUCE_BOTTOM]||0)+1;
-    else if(player.inventory[b]!==undefined) player.inventory[b]++;
+    if(isAnyStairsBlock(b)){ player.inventory.stairs = (player.inventory.stairs||0)+1; ensureInInventory('stairs'); }
+    else if(isAnySpruceStairsBlock(b)){ player.inventory.stairs_spruce = (player.inventory.stairs_spruce||0)+1; ensureInInventory('stairs_spruce'); }
+    else if(TRAPDOOR_OPEN_IDS.indexOf(b)>=0){ player.inventory[BLOCK.TRAPDOOR_BOTTOM] = (player.inventory[BLOCK.TRAPDOOR_BOTTOM]||0)+1; ensureInInventory('trapdoor'); }
+    else if(b===BLOCK.SLAB_TOP){ player.inventory[BLOCK.SLAB_BOTTOM] = (player.inventory[BLOCK.SLAB_BOTTOM]||0)+1; ensureInInventory('slab'); }
+    else if(b===BLOCK.SLAB_OAK_TOP){ player.inventory[BLOCK.SLAB_OAK_BOTTOM] = (player.inventory[BLOCK.SLAB_OAK_BOTTOM]||0)+1; ensureInInventory('slab_oak'); }
+    else if(b===BLOCK.SLAB_SPRUCE_TOP){ player.inventory[BLOCK.SLAB_SPRUCE_BOTTOM] = (player.inventory[BLOCK.SLAB_SPRUCE_BOTTOM]||0)+1; ensureInInventory('slab_spruce'); }
+    else if(player.inventory[b]!==undefined){ player.inventory[b]++; ensureInInventory(itemIdForBlockType(b)); }
     reloadChunksNear(x,z);
     renderHotbar();
   }
